@@ -1,0 +1,66 @@
+{
+	"name": "webext-storage",
+	"version": "0.0.0",
+	"description": "A more usable typed storage API for Web Extensions",
+	"keywords": [
+		"browser",
+		"extension",
+		"chrome",
+		"firefox",
+		"safari",
+		"webextension",
+		"storage",
+		"session",
+		"sync",
+		"local",
+		"event",
+		"web-ext"
+	],
+	"repository": "fregante/webext-storage",
+	"funding": "https://github.com/sponsors/fregante",
+	"license": "MIT",
+	"author": "Federico Brigante <me@fregante.com> (https://fregante.com)",
+	"type": "module",
+	"exports": "./distribution/storage-item.js",
+	"main": "./distribution/storage-item.js",
+	"types": "./distribution/storage-item.d.ts",
+	"files": [
+		"distribution/storage-item.js",
+		"distribution/storage-item.d.ts"
+	],
+	"scripts": {
+		"build": "tsc",
+		"prepack": "tsc --sourceMap false",
+		"test": "tsc --noEmit && xo && tsd && vitest run",
+		"test:watch": "vitest",
+		"watch": "tsc --watch"
+	},
+	"xo": {
+		"envs": [
+			"browser"
+		],
+		"globals": [
+			"chrome"
+		]
+	},
+	"dependencies": {
+		"webext-polyfill-kinda": "^1.0.2"
+	},
+	"devDependencies": {
+		"@sindresorhus/tsconfig": "^5.0.0",
+		"@types/chrome": "^0.0.248",
+		"@types/sinon-chrome": "^2.2.13",
+		"jest-chrome": "^0.8.0",
+		"sinon-chrome": "^3.0.1",
+		"tsd": "^0.28.1",
+		"typescript": "^5.2.2",
+		"vitest": "^0.34.6",
+		"xo": "^0.56.0"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"tsd": {
+		"directory": "source"
+	}
+}
