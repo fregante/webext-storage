@@ -52,7 +52,7 @@
 		"@types/sinon-chrome": "^2.2.13",
 		"jest-chrome": "^0.8.0",
 		"sinon-chrome": "^3.0.1",
-		"tsd": "^0.28.1",
+		"tsd": "^0.29.0",
 		"typescript": "^5.2.2",
 		"vitest": "^0.34.6",
 		"xo": "^0.56.0"

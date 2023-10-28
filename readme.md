@@ -26,6 +26,8 @@ Or download the [standalone bundle](https://bundle.fregante.com/?pkg=webext-stor
 import {StorageItem} from "webext-storage";
 
 const username = new StorageItem<string>('username')
+// Or
+const username = new StorageItem('username', {defaultValue: 'admin'})
 
 await username.set('Ugo');
 // Promise<void>

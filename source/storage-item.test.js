@@ -4,9 +4,9 @@ import {StorageItem} from './storage-item.ts';
 
 const testItem = new StorageItem('name');
 
-function createStorage(wholeCache) {
+function createStorage(wholeCache, area = 'local') {
 	for (const [key, data] of Object.entries(wholeCache)) {
-		chrome.storage.local.get
+		chrome.storage[area].get
 			.withArgs(key)
 			.yields({[key]: data});
 	}
@@ -17,6 +17,7 @@ beforeEach(() => {
 	chrome.storage.local.get.yields({});
 	chrome.storage.local.set.yields(undefined);
 	chrome.storage.local.remove.yields(undefined);
+	chrome.storage.sync.get.yields({});
 });
 
 test('get() with empty storage', async () => {
@@ -28,6 +29,25 @@ test('get() with storage', async () => {
 		name: 'Rico',
 	});
 	assert.equal(await testItem.get(), 'Rico');
+});
+
+test('get() with default', async () => {
+	const testItem = new StorageItem('name', {defaultValue: 'Anne'});
+	assert.equal(await testItem.get(), 'Anne');
+	createStorage({
+		name: 'Rico',
+	});
+	assert.equal(await testItem.get(), 'Rico');
+});
+
+test('get() with `sync` storage', async () => {
+	const sync = new StorageItem('name', {area: 'sync'});
+	await sync.get();
+
+	assert.equal(chrome.storage.local.get.lastCall, undefined);
+
+	const arguments_ = chrome.storage.sync.get.lastCall.args[0];
+	assert.deepEqual(arguments_, 'name');
 });
 
 test('set() without a value matches the standard behavior (no change made)', async () => {

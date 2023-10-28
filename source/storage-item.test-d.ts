@@ -8,30 +8,44 @@ type Value = Primitive | Primitive[] | Record<string, any>;
 new StorageItem('key', {area: 'local'});
 new StorageItem('key', {area: 'sync'});
 
+// No type, no default, return `unknown`
 const unknownItem = new StorageItem('key');
 expectAssignable<Promise<unknown>>(unknownItem.get());
 
-const objectItem = new StorageItem<{name: string}>('key');
-expectType<Promise<{name: string} | undefined>>(objectItem.get());
-expectType<Promise<void>>(objectItem.set({name: 'new name'}));
+// Explicit type, no default, return `T | undefined`
+const objectNoDefault = new StorageItem<{name: string}>('key');
+expectType<Promise<{name: string} | undefined>>(objectNoDefault.get());
+expectType<Promise<void>>(objectNoDefault.set({name: 'new name'}));
 
-const stringItem = new StorageItem<string>('key');
-expectAssignable<Promise<Value | undefined>>(stringItem.get());
-expectNotAssignable<Promise<number | undefined>>(stringItem.get());
-expectType<Promise<string | undefined>>(stringItem.get());
-expectType<Promise<void>>(stringItem.set('some string'));
-
-// @ts-expect-error Type is string
-await stringItem.set(1);
-
-// @ts-expect-error Type is string
-await stringItem.set(true);
+// NonNullable from default
+const stringDefault = new StorageItem('key', {defaultValue: 'SMASHING'});
+expectAssignable<Promise<Value>>(stringDefault.get());
+expectNotAssignable<Promise<number>>(stringDefault.get());
+expectType<Promise<string>>(stringDefault.get());
+expectType<Promise<void>>(stringDefault.set('some string'));
 
 // @ts-expect-error Type is string
-await stringItem.set([true, 'string']);
+await stringDefault.set(1);
 
 // @ts-expect-error Type is string
-await stringItem.set({wow: [true, 'string']});
+await stringDefault.set(true);
 
 // @ts-expect-error Type is string
-await stringItem.set(1, {days: 1});
+await stringDefault.set([true, 'string']);
+
+// @ts-expect-error Type is string
+await stringDefault.set({wow: [true, 'string']});
+
+// @ts-expect-error Type is string
+await stringDefault.set(1, {days: 1});
+
+stringDefault.onChange(value => {
+	expectType<string>(value);
+});
+
+objectNoDefault.onChange(value => {
+	expectType<{name: string}>(value);
+});
+
+// @ts-expect-error Don't allow mismatched types
+new StorageItem<number>('key', {defaultValue: 'SMASHING'});
