@@ -47,6 +47,12 @@ test('set() with value', async () => {
 	assert.equal(arguments_.name, 'Anne');
 });
 
+test('remove()', async () => {
+	await testItem.remove();
+	const arguments_ = chrome.storage.local.remove.lastCall.args[0];
+	assert.equal(arguments_, 'name');
+});
+
 test('onChange() is called for the correct item', async () => {
 	const name = new StorageItem('name');
 	const spy = vi.fn();

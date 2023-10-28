@@ -24,6 +24,10 @@ export class StorageItem<T> {
 		await chromeP.storage[this.area].set({[this.key]: value});
 	}
 
+	async remove(): Promise<void> {
+		await chromeP.storage[this.area].remove(this.key);
+	}
+
 	onChange(callback: (value: T) => void, signal?: AbortSignal): void {
 		const changeHandler = (changes: Record<string, chrome.storage.StorageChange>, area: chrome.storage.AreaName) => {
 			console.log('changeHandler', changes, area);
