@@ -1,6 +1,6 @@
 {
 	"name": "webext-storage",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "A more usable typed storage API for Web Extensions",
 	"keywords": [
 		"browser",
