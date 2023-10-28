@@ -23,7 +23,7 @@ export class StorageItem<
 		this.defaultValue = defaultValue;
 	}
 
-	async get(): Promise<Return> {
+	get = async (): Promise<Return> => {
 		const result = await chromeP.storage[this.area].get(this.key);
 		if (!Object.hasOwn(result, this.key)) {
 			return this.defaultValue as Return;
@@ -31,15 +31,15 @@ export class StorageItem<
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Assumes the user never uses the Storage API directly
 		return result[this.key];
-	}
+	};
 
-	async set(value: NonNullable<InferredBase>): Promise<void> {
+	set = async (value: NonNullable<InferredBase>): Promise<void> => {
 		await chromeP.storage[this.area].set({[this.key]: value});
-	}
+	};
 
-	async remove(): Promise<void> {
+	remove = async (): Promise<void> => {
 		await chromeP.storage[this.area].remove(this.key);
-	}
+	};
 
 	onChange(
 		callback: (value: NonNullable<InferredBase>) => void,
