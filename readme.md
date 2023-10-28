@@ -5,6 +5,13 @@
 
 > A more usable typed storage API for Web Extensions
 
+- Browsers: Chrome, Firefox, and Safari
+- Manifest: v2 and v3
+- Permissions: `storage` or `unlimitedStorage`
+- Context: They can be called from any context
+
+**Sponsored by [PixieBrix](https://www.pixiebrix.com)** :tada:
+
 ## Install
 
 ```sh
