@@ -12,6 +12,36 @@
 
 **Sponsored by [PixieBrix](https://www.pixiebrix.com)** :tada:
 
+`chrome.storage.local.get()` is very inconvenient to use and it does not provide type safety. This module provides a better API:
+
+```ts
+// Before
+const storage = await chrome.storage.local.get('user-options');
+const value = storage['user-options']; // The type is `any`
+await chrome.storage.local.set({['user-options']: {color: 'red'}}); // Not type-checked
+chrome.storage.onChanged.addListener((storageArea, change) => {
+	if (storageArea === 'local' && change['user-options']) { // Repetitive
+		console.log('New options', change['user-options'].newValue)
+	}
+});
+
+// After
+const options = new StorageItem<Record<string, string>>('user-options');
+const value = await options.get(); // The type is `Record<string, string> | undefined`
+await options.set({color: 'red'}) // Type-checked
+options.onChange(newValue => {
+	console.log('New options', newValue)
+});
+```
+
+Why this is better:
+
+- The storage item is defined in a single place, including its storageArea, its types and default value
+- `get` only is only `.get()` instead of the awkward post-get object access that
+- Every `get` and `set` operation is type-safe
+- If you provide a `defaultValue`, the return type will not be ` | undefined`
+- The `onChange` example speaks for itself
+
 ## Install
 
 ```sh
@@ -48,7 +78,7 @@ username.onChange(newName => {
 
 ## Related
 
-- [webext-storage-cache](https://github.com/fregante/webext-storage-cache) - Detects where the current browser extension code is being run.
+- [webext-storage-cache](https://github.com/fregante/webext-storage-cache) - Cache values in your Web Extension and clear them on expiration.
 - [webext-tools](https://github.com/fregante/webext-tools) - Utility functions for Web Extensions.
 - [webext-content-scripts](https://github.com/fregante/webext-content-scripts) - Utility functions to inject content scripts in WebExtensions.
 - [webext-base-css](https://github.com/fregante/webext-base-css) - Extremely minimal stylesheet/setup for Web Extensions’ options pages (also dark mode)
