@@ -7,17 +7,17 @@ export type StorageItemOptions<T> = {
 
 export class StorageItem<
 	Base,
-	InferredBase extends (Base | undefined) = Base | undefined,
-	Return = InferredBase extends undefined ? Base | undefined : InferredBase,
+	Default = Base | undefined,
+	Return = Default extends undefined ? Base : Default,
 > {
 	readonly area: chrome.storage.AreaName;
-	readonly defaultValue?: InferredBase;
+	readonly defaultValue?: Default;
 	constructor(
 		readonly key: string,
 		{
 			area = 'local',
 			defaultValue,
-		}: StorageItemOptions<NonNullable<InferredBase>> = {},
+		}: StorageItemOptions<NonNullable<Default>> = {},
 	) {
 		this.area = area;
 		this.defaultValue = defaultValue;
@@ -33,7 +33,7 @@ export class StorageItem<
 		return result[this.key];
 	};
 
-	set = async (value: NonNullable<InferredBase>): Promise<void> => {
+	set = async (value: NonNullable<Default>): Promise<void> => {
 		await chromeP.storage[this.area].set({[this.key]: value});
 	};
 
@@ -42,7 +42,7 @@ export class StorageItem<
 	};
 
 	onChange(
-		callback: (value: NonNullable<InferredBase>) => void,
+		callback: (value: NonNullable<Default>) => void,
 		signal?: AbortSignal,
 	): void {
 		const changeHandler = (

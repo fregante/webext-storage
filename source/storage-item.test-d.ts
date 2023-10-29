@@ -24,6 +24,10 @@ expectNotAssignable<Promise<number>>(stringDefault.get());
 expectType<Promise<string>>(stringDefault.get());
 expectType<Promise<void>>(stringDefault.set('some string'));
 
+// NonNullable from default, includes broader type as generic
+const broadGeneric = new StorageItem<Record<string, number>>('key', {defaultValue: {}});
+expectAssignable<Promise<Record<string, number>>>(broadGeneric.get());
+
 // @ts-expect-error Type is string
 await stringDefault.set(1);
 
