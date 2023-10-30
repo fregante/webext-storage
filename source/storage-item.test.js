@@ -78,10 +78,10 @@ test('remove()', async () => {
 	assert.equal(arguments_, 'name');
 });
 
-test('onChange() is called for the correct item', async () => {
+test('onChanged() is called for the correct item', async () => {
 	const name = new StorageItem('name');
 	const spy = vi.fn();
-	name.onChange(spy);
+	name.onChanged(spy);
 	chrome.storage.onChanged.trigger({unrelatedKey: 123}, 'local');
 	expect(spy).not.toHaveBeenCalled();
 	chrome.storage.onChanged.trigger({name: 'Anne'}, 'sync');

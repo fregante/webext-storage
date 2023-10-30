@@ -12,6 +12,10 @@ export class StorageItem<
 > {
 	readonly area: chrome.storage.AreaName;
 	readonly defaultValue?: Default;
+
+	/** @deprecated Use `onChanged` instead */
+	onChange = this.onChanged;
+
 	constructor(
 		readonly key: string,
 		{
@@ -41,7 +45,7 @@ export class StorageItem<
 		await chromeP.storage[this.area].remove(this.key);
 	};
 
-	onChange(
+	onChanged(
 		callback: (value: NonNullable<Default>) => void,
 		signal?: AbortSignal,
 	): void {
