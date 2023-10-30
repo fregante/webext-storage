@@ -29,7 +29,7 @@ chrome.storage.onChanged.addListener((storageArea, change) => {
 const options = new StorageItem<Record<string, string>>('user-options');
 const value = await options.get(); // The type is `Record<string, string> | undefined`
 await options.set({color: 'red'}) // Type-checked
-options.onChange(newValue => {
+options.onChanged(newValue => {
 	console.log('New options', newValue)
 });
 ```
@@ -40,7 +40,7 @@ Why this is better:
 - `get` only is only `.get()` instead of the awkward post-get object access that
 - Every `get` and `set` operation is type-safe
 - If you provide a `defaultValue`, the return type will not be ` | undefined`
-- The `onChange` example speaks for itself
+- The `onChanged` example speaks for itself
 
 ## Install
 
@@ -71,7 +71,7 @@ await username.remove();
 await username.set({name: 'Ugo'});
 // TypeScript Error: Argument of type '{ name: string; }' is not assignable to parameter of type 'string'.
 
-username.onChange(newName => {
+username.onChanged(newName => {
 	console.log('The user’s new name is', newName);
 });
 ```
