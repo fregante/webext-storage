@@ -21,8 +21,9 @@
 	"license": "MIT",
 	"author": "Federico Brigante <me@fregante.com> (https://fregante.com)",
 	"type": "module",
-	"exports": "./index.js",
-	"types": "./index.d.ts",
+	"exports": "./distribution/storage-item.js",
+	"main": "./distribution/storage-item.js",
+	"types": "./distribution/storage-item.d.ts",
 	"files": [
 		"distribution/storage-item.js",
 		"distribution/storage-item.d.ts"
