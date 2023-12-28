@@ -21,9 +21,8 @@
 	"license": "MIT",
 	"author": "Federico Brigante <me@fregante.com> (https://fregante.com)",
 	"type": "module",
-	"exports": "./distribution/storage-item.js",
-	"main": "./distribution/storage-item.js",
-	"types": "./distribution/storage-item.d.ts",
+	"exports": "./index.js",
+	"types": "./index.d.ts",
 	"files": [
 		"distribution/storage-item.js",
 		"distribution/storage-item.d.ts"
@@ -48,13 +47,13 @@
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^5.0.0",
-		"@types/chrome": "^0.0.248",
-		"@types/sinon-chrome": "^2.2.13",
+		"@types/chrome": "^0.0.254",
+		"@types/sinon-chrome": "^2.2.15",
 		"jest-chrome": "^0.8.0",
 		"sinon-chrome": "^3.0.1",
-		"tsd": "^0.29.0",
-		"typescript": "^5.2.2",
-		"vitest": "^0.34.6",
+		"tsd": "^0.30.1",
+		"typescript": "^5.3.3",
+		"vitest": "^1.1.0",
 		"xo": "^0.56.0"
 	},
 	"engines": {
