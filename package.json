@@ -1,6 +1,6 @@
 {
 	"name": "webext-storage",
-	"version": "1.2.2",
+	"version": "1.2.3",
 	"description": "A more usable typed storage API for Web Extensions",
 	"keywords": [
 		"browser",
@@ -58,7 +58,7 @@
 		"xo": "^0.56.0"
 	},
 	"engines": {
-		"node": ">=20"
+		"node": ">=18"
 	},
 	"tsd": {
 		"directory": "source"
