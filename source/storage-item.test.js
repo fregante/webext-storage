@@ -1,5 +1,6 @@
-/* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
-import {test, beforeEach, assert, expect, vi} from 'vitest';
+import {
+	test, beforeEach, assert, expect, vi,
+} from 'vitest';
 import {StorageItem} from './storage-item.ts';
 
 const testItem = new StorageItem('name');

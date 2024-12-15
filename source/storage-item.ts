@@ -6,12 +6,14 @@ export type StorageItemOptions<T> = {
 };
 
 export class StorageItem<
+	/** Only specify this if you don't have a default value */
 	Base,
-	Default = Base | undefined,
-	Return = Default extends undefined ? Base : Default,
+
+	/** The return type will be undefined unless you provide a default value */
+	Return = Base | undefined,
 > {
 	readonly area: chrome.storage.AreaName;
-	readonly defaultValue?: Default;
+	readonly defaultValue?: Return;
 
 	/** @deprecated Use `onChanged` instead */
 	onChange = this.onChanged;
@@ -21,7 +23,7 @@ export class StorageItem<
 		{
 			area = 'local',
 			defaultValue,
-		}: StorageItemOptions<NonNullable<Default>> = {},
+		}: StorageItemOptions<NonNullable<Return>> = {},
 	) {
 		this.area = area;
 		this.defaultValue = defaultValue;
@@ -37,7 +39,7 @@ export class StorageItem<
 		return result[this.key];
 	};
 
-	set = async (value: NonNullable<Default>): Promise<void> => {
+	set = async (value: NonNullable<Return>): Promise<void> => {
 		await chromeP.storage[this.area].set({[this.key]: value});
 	};
 
@@ -46,7 +48,7 @@ export class StorageItem<
 	};
 
 	onChanged(
-		callback: (value: NonNullable<Default>) => void,
+		callback: (value: NonNullable<Return>) => void,
 		signal?: AbortSignal,
 	): void {
 		const changeHandler = (

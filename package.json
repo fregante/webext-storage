@@ -31,7 +31,7 @@
 	"scripts": {
 		"build": "tsc",
 		"prepack": "tsc --sourceMap false",
-		"test": "tsc --noEmit && xo && tsd && vitest run",
+		"test": "tsc && xo && tsd && vitest run",
 		"test:watch": "vitest",
 		"watch": "tsc --watch"
 	},
@@ -47,15 +47,15 @@
 		"webext-polyfill-kinda": "^1.0.2"
 	},
 	"devDependencies": {
-		"@sindresorhus/tsconfig": "^5.0.0",
-		"@types/chrome": "^0.0.254",
+		"@sindresorhus/tsconfig": "^7.0.0",
+		"@types/chrome": "^0.0.287",
 		"@types/sinon-chrome": "^2.2.15",
 		"jest-chrome": "^0.8.0",
 		"sinon-chrome": "^3.0.1",
-		"tsd": "^0.30.1",
-		"typescript": "^5.3.3",
-		"vitest": "^1.1.0",
-		"xo": "^0.56.0"
+		"tsd": "^0.31.2",
+		"typescript": "^5.7.2",
+		"vitest": "^2.1.8",
+		"xo": "^0.60.0"
 	},
 	"engines": {
 		"node": ">=18"

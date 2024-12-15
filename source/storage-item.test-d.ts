@@ -25,7 +25,9 @@ expectType<Promise<string>>(stringDefault.get());
 expectType<Promise<void>>(stringDefault.set('some string'));
 
 // NonNullable from default, includes broader type as generic
-const broadGeneric = new StorageItem<Record<string, number>>('key', {defaultValue: {}});
+// The second type parameter must be re-specified because TypeScript stops inferring it
+// https://github.com/microsoft/TypeScript/issues/26242
+const broadGeneric = new StorageItem<Record<string, number>, Record<string, number>>('key', {defaultValue: {a: 1}});
 expectAssignable<Promise<Record<string, number>>>(broadGeneric.get());
 
 // @ts-expect-error Type is string
