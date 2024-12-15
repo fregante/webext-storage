@@ -23,7 +23,7 @@ export class StorageItem<
 		{
 			area = 'local',
 			defaultValue,
-		}: StorageItemOptions<NonNullable<Return>> = {},
+		}: StorageItemOptions<Exclude<Return, undefined>> = {},
 	) {
 		this.area = area;
 		this.defaultValue = defaultValue;
@@ -39,7 +39,7 @@ export class StorageItem<
 		return result[this.key];
 	};
 
-	set = async (value: NonNullable<Return>): Promise<void> => {
+	set = async (value: Exclude<Return, undefined>): Promise<void> => {
 		await chromeP.storage[this.area].set({[this.key]: value});
 	};
 
@@ -48,7 +48,7 @@ export class StorageItem<
 	};
 
 	onChanged(
-		callback: (value: NonNullable<Return>) => void,
+		callback: (value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
 	): void {
 		const changeHandler = (
