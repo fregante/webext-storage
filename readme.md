@@ -5,29 +5,11 @@
 
 > A more usable typed storage API for Web Extensions
 
-- Browsers: Chrome, Firefox, and Safari
-- Manifest: v2 and v3
-- Permissions: `storage` or `unlimitedStorage`
-- Context: They can be called from any context
-
 **Sponsored by [PixieBrix](https://www.pixiebrix.com)** :tada:
 
-`chrome.storage.local.get()` is very inconvenient to use and it does not provide type safety. This module provides a better API:
+`chrome.storage.local.get()` is very inconvenient to use and it's not type-safe. This module provides a better API:
 
-#### Native API
-
-```ts
-const storage = await chrome.storage.local.get('user-options');
-const value = storage['user-options']; // The type is `any`
-await chrome.storage.local.set({['user-options']: {color: 'red'}}); // Not type-checked
-chrome.storage.onChanged.addListener((storageArea, change) => {
-	if (storageArea === 'local' && change['user-options']) { // Repetitive
-		console.log('New options', change['user-options'].newValue)
-	}
-});
-``` 
-
-#### This API
+<details><summary>Comparison 💥</summary>
 
 ```ts
 const options = new StorageItem<Record<string, string>>('user-options');
@@ -38,13 +20,26 @@ options.onChanged(newValue => {
 });
 ```
 
-Why this is better:
-
 - The storage item is defined in a single place, including its storageArea, its types and default value
-- `item.get()` returns the raw value instead of an object 
+- `item.get()` returns the raw value instead of an object
 - Every `get` and `set` operation is type-safe
 - If you provide a `defaultValue`, the return type will not be ` | undefined`
 - The `onChanged` example speaks for itself
+
+Now compare it to the native API:
+
+```ts
+const storage = await chrome.storage.local.get('user-options');
+const value = storage['user-options']; // The type is `any`
+await chrome.storage.local.set({['user-options']: {color: 'red'}}); // Not type-checked
+chrome.storage.onChanged.addListener((storageArea, change) => {
+	if (storageArea === 'local' && change['user-options']) { // Repetitive
+		console.log('New options', change['user-options'].newValue)
+	}
+});
+```
+
+</details>
 
 ## Install
 
@@ -52,33 +47,21 @@ Why this is better:
 npm install webext-storage
 ```
 
-Or download the [standalone bundle](https://bundle.fregante.com/?pkg=webext-storage&name=StorageItem) to include in your `manifest.json`.
+Or download the [standalone bundle](https://bundle.fregante.com/?pkg=webext-storage&name=window) to include in your `manifest.json`.
 
 ## Usage
 
-```ts
-import {StorageItem} from "webext-storage";
+The package exports two classes:
 
-const username = new StorageItem<string>('username')
-// Or
-const username = new StorageItem('username', {defaultValue: 'admin'})
+- [StorageItem](./source/storage-item.md) - Store a single value in storage
+- [StorageItemMap](./source/storage-item-map.md) - Store multiple related values in storage with the same type, similar to `new Map()`
 
-await username.set('Ugo');
-// Promise<void>
+Support:
 
-await username.get();
-// Promise<string>
-
-await username.remove();
-// Promise<void>
-
-await username.set({name: 'Ugo'});
-// TypeScript Error: Argument of type '{ name: string; }' is not assignable to parameter of type 'string'.
-
-username.onChanged(newName => {
-	console.log('The user’s new name is', newName);
-});
-```
+- Browsers: Chrome, Firefox, and Safari
+- Manifest: v2 and v3
+- Permissions: `storage` or `unlimitedStorage`
+- Context: They can be called from any context
 
 ## Related
 
