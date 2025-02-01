@@ -44,13 +44,13 @@
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^7.0.0",
-		"@types/chrome": "^0.0.287",
+		"@types/chrome": "^0.0.300",
 		"@types/sinon-chrome": "^2.2.15",
 		"jest-chrome": "^0.8.0",
 		"sinon-chrome": "^3.0.1",
 		"tsd": "^0.31.2",
-		"typescript": "^5.7.2",
-		"vitest": "^2.1.8",
+		"typescript": "^5.7.3",
+		"vitest": "^3.0.4",
 		"xo": "^0.60.0"
 	},
 	"engines": {

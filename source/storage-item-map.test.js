@@ -1,7 +1,7 @@
 import {
 	test, beforeEach, assert, expect, vi,
 } from 'vitest';
-import {StorageItemMap} from './storage-item-map.ts';
+import {StorageItemMap} from 'webext-storage';
 
 const testItem = new StorageItemMap('height');
 
@@ -52,7 +52,7 @@ test('get() with `sync` storage', async () => {
 	assert.deepEqual(argument, 'brands:::MacBook');
 });
 
-test('set() without a value matches the standard behavior (no change made)', async () => {
+test('set() without a value matches the standard behavior (undefined will unset the value)', async () => {
 	createStorage({
 		'height:::rico': 220,
 	});

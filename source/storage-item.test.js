@@ -1,7 +1,7 @@
 import {
 	test, beforeEach, assert, expect, vi,
 } from 'vitest';
-import {StorageItem} from './storage-item.ts';
+import {StorageItem} from 'webext-storage';
 
 const testItem = new StorageItem('name');
 
@@ -52,7 +52,7 @@ test('get() with `sync` storage', async () => {
 	assert.deepEqual(arguments_, 'name');
 });
 
-test('set() without a value matches the standard behavior (no change made)', async () => {
+test('set() without a value matches the standard behavior (undefined will unset the value)', async () => {
 	createStorage({
 		name: 'Rico',
 	});
