@@ -52,7 +52,7 @@ test('get() with `sync` storage', async () => {
 	assert.deepEqual(arguments_, 'name');
 });
 
-test('set() without a value matches the standard behavior (undefined will unset the value)', async () => {
+test('set() without a value matches the standard behavior (no change made)', async () => {
 	createStorage({
 		name: 'Rico',
 	});
