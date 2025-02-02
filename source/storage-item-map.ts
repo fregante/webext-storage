@@ -34,11 +34,6 @@ export class StorageItemMap<
 		return Object.hasOwn(result, rawStorageKey);
 	};
 
-	delete = async (secondaryKey: string): Promise<void> => {
-		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		await chromeP.storage[this.areaName].remove(rawStorageKey);
-	};
-
 	get = async (secondaryKey: string): Promise<Return> => {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
@@ -59,6 +54,10 @@ export class StorageItemMap<
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		await chromeP.storage[this.areaName].remove(rawStorageKey);
 	};
+
+	/** @deprecated Only here to match the Map API; use `remove` instead */
+	// eslint-disable-next-line @typescript-eslint/member-ordering -- invalid
+	delete = this.remove;
 
 	onChanged(
 		callback: (key: string, value: Exclude<Return, undefined>) => void,
