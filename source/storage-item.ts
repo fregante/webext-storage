@@ -43,6 +43,11 @@ export class StorageItem<
 		await chromeP.storage[this.area].set({[this.key]: value});
 	};
 
+	has = async (): Promise<boolean> => {
+		const result = await chromeP.storage[this.area].get(this.key);
+		return Object.hasOwn(result, this.key);
+	};
+
 	remove = async (): Promise<void> => {
 		await chromeP.storage[this.area].remove(this.key);
 	};

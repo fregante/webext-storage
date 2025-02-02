@@ -18,6 +18,9 @@ await username.get();
 await username.remove();
 // Promise<void>
 
+await names.has();
+// Promise<false>
+
 await username.set({name: 'Ugo'});
 // TypeScript Error: Argument of type '{ name: string; }' is not assignable to parameter of type 'string'.
 

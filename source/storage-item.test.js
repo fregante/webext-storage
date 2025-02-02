@@ -79,6 +79,19 @@ test('remove()', async () => {
 	assert.equal(arguments_, 'name');
 });
 
+test('has() returns false', async () => {
+	createStorage({});
+	assert.equal(await testItem.has(), false);
+});
+
+test('has() returns true', async () => {
+	createStorage({
+		name: 'Rico',
+	});
+	assert.equal(await testItem.has(), true);
+	assert.equal(await (0, testItem.has)(), true, 'get method should be bound');
+});
+
 test('onChanged() is called for the correct item', async () => {
 	const name = new StorageItem('name');
 	const spy = vi.fn();
