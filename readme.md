@@ -24,6 +24,7 @@ options.onChanged(newValue => {
 - `item.get()` returns the raw value instead of an object
 - Every `get` and `set` operation is type-safe
 - If you provide a `defaultValue`, the return type will not be ` | undefined`
+- Calling `.set(undefined)` will unset the value instead of the call being ignored
 - The `onChanged` example speaks for itself
 
 Now compare it to the native API:

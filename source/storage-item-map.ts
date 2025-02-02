@@ -47,7 +47,12 @@ export class StorageItemMap<
 
 	set = async (secondaryKey: string, value: Exclude<Return, undefined>): Promise<void> => {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		await chromeP.storage[this.areaName].set({[rawStorageKey]: value});
+		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
+		if (value === undefined) {
+			await chromeP.storage[this.areaName].remove(rawStorageKey);
+		} else {
+			await chromeP.storage[this.areaName].set({[rawStorageKey]: value});
+		}
 	};
 
 	remove = async (secondaryKey: string): Promise<void> => {

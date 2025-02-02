@@ -40,7 +40,12 @@ export class StorageItem<
 	};
 
 	set = async (value: Exclude<Return, undefined>): Promise<void> => {
-		await chromeP.storage[this.area].set({[this.key]: value});
+		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
+		if (value === undefined) {
+			await chromeP.storage[this.area].remove(this.key);
+		} else {
+			await chromeP.storage[this.area].set({[this.key]: value});
+		}
 	};
 
 	has = async (): Promise<boolean> => {

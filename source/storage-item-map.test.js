@@ -52,14 +52,14 @@ test('get() with `sync` storage', async () => {
 	assert.deepEqual(argument, 'brands:::MacBook');
 });
 
-test('set() without a value matches the standard behavior (no change made)', async () => {
+test('set(x, undefined) will unset the value', async () => {
 	createStorage({
 		'height:::rico': 220,
 	});
 	assert.equal(await testItem.set('rico'), undefined);
-	const argument = chrome.storage.local.set.lastCall.args[0];
-	assert.deepEqual(Object.keys(argument), ['height:::rico']);
-	assert.equal(argument.name, undefined);
+	assert.equal(chrome.storage.local.set.lastCall, undefined);
+	const [argument] = chrome.storage.local.remove.lastCall.args;
+	assert.deepEqual(argument, 'height:::rico');
 });
 
 test('set() with value', async () => {
