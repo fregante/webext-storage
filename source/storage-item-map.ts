@@ -31,7 +31,7 @@ export class StorageItemMap<
 	has = async (secondaryKey: string): Promise<boolean> => {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
-		return Object.hasOwn(result, secondaryKey);
+		return Object.hasOwn(result, rawStorageKey);
 	};
 
 	delete = async (secondaryKey: string): Promise<void> => {

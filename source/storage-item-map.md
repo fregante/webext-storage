@@ -9,7 +9,7 @@ const names = new StorageItemMap<string>('names')
 // Or
 const names = new StorageItemMap('names', {defaultValue: '##unknown'})
 
-await names.set('theslayer83', 'Mark Zuckerberg');
+await names.set('theslayer83', 'Mark Twain');
 // Promise<void>
 
 await names.get('theslayer83');
@@ -17,6 +17,9 @@ await names.get('theslayer83');
 
 await names.remove('theslayer83');
 // Promise<void>
+
+await names.has('theslayer83');
+// Promise<false>
 
 await names.set({name: 'Ugo'});
 // TypeScript Error: Argument of type '{ name: string; }' is not assignable to parameter of type 'string'.

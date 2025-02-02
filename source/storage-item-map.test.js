@@ -79,6 +79,18 @@ test('remove()', async () => {
 	assert.equal(argument, 'height:::mario');
 });
 
+test('has() returns false', async () => {
+	assert.equal(await testItem.has('rico'), false);
+});
+
+test('has() returns true', async () => {
+	createStorage({
+		'height:::rico': 220,
+	});
+	assert.equal(await testItem.has('rico'), true);
+	assert.equal(await (0, testItem.has)('rico'), true, 'get method should be bound');
+});
+
 test('onChanged() is called for the correct item', async () => {
 	const name = new StorageItemMap('distance');
 	const spy = vi.fn();
