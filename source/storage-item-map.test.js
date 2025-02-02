@@ -48,7 +48,7 @@ test('get() with `sync` storage', async () => {
 
 	assert.equal(chrome.storage.local.get.lastCall, undefined);
 
-	const argument = chrome.storage.sync.get.lastCall.args[0];
+	const [argument] = chrome.storage.sync.get.lastCall.args;
 	assert.deepEqual(argument, 'brands:::MacBook');
 });
 
@@ -64,18 +64,18 @@ test('set(x, undefined) will unset the value', async () => {
 
 test('set() with value', async () => {
 	await testItem.set('rico', 250);
-	const argument1 = chrome.storage.local.set.lastCall.args[0];
+	const [argument1] = chrome.storage.local.set.lastCall.args;
 	assert.deepEqual(Object.keys(argument1), ['height:::rico']);
 	assert.equal(argument1['height:::rico'], 250);
 
 	await (0, testItem.set)('luigi', 120);
-	const argument2 = chrome.storage.local.set.lastCall.args[0];
+	const [argument2] = chrome.storage.local.set.lastCall.args;
 	assert.equal(argument2['height:::luigi'], 120, 'get method should be bound');
 });
 
 test('remove()', async () => {
 	await testItem.remove('mario');
-	const argument = chrome.storage.local.remove.lastCall.args[0];
+	const [argument] = chrome.storage.local.remove.lastCall.args;
 	assert.equal(argument, 'height:::mario');
 });
 
