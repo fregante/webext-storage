@@ -31,7 +31,8 @@ export class StorageItem<
 
 	get = async (): Promise<Return> => {
 		const result = await chromeP.storage[this.area].get(this.key);
-		if (!Object.hasOwn(result, this.key)) {
+		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
+		if (result[this.key] === undefined) {
 			return this.defaultValue as Return;
 		}
 
@@ -50,7 +51,8 @@ export class StorageItem<
 
 	has = async (): Promise<boolean> => {
 		const result = await chromeP.storage[this.area].get(this.key);
-		return Object.hasOwn(result, this.key);
+		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
+		return result[this.key] !== undefined;
 	};
 
 	remove = async (): Promise<void> => {

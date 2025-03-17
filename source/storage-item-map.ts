@@ -31,13 +31,15 @@ export class StorageItemMap<
 	has = async (secondaryKey: string): Promise<boolean> => {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
-		return Object.hasOwn(result, rawStorageKey);
+		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
+		return result[rawStorageKey] !== undefined;
 	};
 
 	get = async (secondaryKey: string): Promise<Return> => {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
-		if (!Object.hasOwn(result, rawStorageKey)) {
+		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
+		if (result[rawStorageKey] === undefined) {
 			return this.defaultValue as Return;
 		}
 
