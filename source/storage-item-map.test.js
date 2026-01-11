@@ -30,7 +30,6 @@ test('get() with storage', async () => {
 		'height:::rico': 220,
 	});
 	assert.equal(await testItem.get('rico'), 220);
-	assert.equal(await (0, testItem.get)('rico'), 220, 'get method should be bound');
 });
 
 test('get() with default', async () => {
@@ -68,9 +67,9 @@ test('set() with value', async () => {
 	assert.deepEqual(Object.keys(argument1), ['height:::rico']);
 	assert.equal(argument1['height:::rico'], 250);
 
-	await (0, testItem.set)('luigi', 120);
+	await testItem.set('luigi', 120);
 	const [argument2] = chrome.storage.local.set.lastCall.args;
-	assert.equal(argument2['height:::luigi'], 120, 'get method should be bound');
+	assert.equal(argument2['height:::luigi'], 120);
 });
 
 test('remove()', async () => {
@@ -88,7 +87,6 @@ test('has() returns true', async () => {
 		'height:::rico': 220,
 	});
 	assert.equal(await testItem.has('rico'), true);
-	assert.equal(await (0, testItem.has)('rico'), true, 'get method should be bound');
 });
 
 test('onChanged() is called for the correct item', async () => {

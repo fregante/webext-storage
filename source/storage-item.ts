@@ -1,6 +1,9 @@
-import {StorageItemMap, type StorageItemMapOptions} from './storage-item-map.js';
+import chromeP from 'webext-polyfill-kinda';
 
-export type StorageItemOptions<T> = StorageItemMapOptions<T>;
+export type StorageItemOptions<T> = {
+	area?: chrome.storage.AreaName;
+	defaultValue?: T;
+};
 
 export class StorageItem<
 	/** Only specify this if you don't have a default value */
@@ -8,58 +11,74 @@ export class StorageItem<
 
 	/** The return type will be undefined unless you provide a default value */
 	Return = Base | undefined,
-> extends StorageItemMap<Base, Return> {
-	private static get defaultSecondaryKey(): string {
-		return '';
-	}
-
-	readonly key: string;
+> {
 	readonly area: chrome.storage.AreaName;
+	readonly defaultValue?: Return;
 
 	/** @deprecated Use `onChanged` instead */
 	onChange = this.onChanged;
 
 	constructor(
-		key: string,
-		options: StorageItemOptions<Exclude<Return, undefined>> = {},
+		readonly key: string,
+		{
+			area = 'local',
+			defaultValue,
+		}: StorageItemOptions<Exclude<Return, undefined>> = {},
 	) {
-		super('', options);
-		this.key = key;
-		this.area = this.areaName;
+		this.area = area;
+		this.defaultValue = defaultValue;
 	}
 
-	override async get(): Promise<Return> {
-		return super.get(StorageItem.defaultSecondaryKey);
-	}
+	get = async (): Promise<Return> => {
+		const result = await chromeP.storage[this.area].get(this.key);
+		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
+		if (result[this.key] === undefined) {
+			return this.defaultValue as Return;
+		}
 
-	// @ts-expect-error - Overriding with different signature for single-key API
-	override async set(value: Exclude<Return, undefined>): Promise<void> {
-		await super.set(StorageItem.defaultSecondaryKey, value);
-	}
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Assumes the user never uses the Storage API directly
+		return result[this.key];
+	};
 
-	override async has(): Promise<boolean> {
-		return super.has(StorageItem.defaultSecondaryKey);
-	}
+	set = async (value: Exclude<Return, undefined>): Promise<void> => {
+		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
+		if (value === undefined) {
+			await chromeP.storage[this.area].remove(this.key);
+		} else {
+			await chromeP.storage[this.area].set({[this.key]: value});
+		}
+	};
 
-	override async remove(): Promise<void> {
-		await super.remove(StorageItem.defaultSecondaryKey);
-	}
+	has = async (): Promise<boolean> => {
+		const result = await chromeP.storage[this.area].get(this.key);
+		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
+		return result[this.key] !== undefined;
+	};
 
-	// @ts-expect-error - Overriding with different signature for single-key API
-	override onChanged(
+	remove = async (): Promise<void> => {
+		await chromeP.storage[this.area].remove(this.key);
+	};
+
+	onChanged(
 		callback: (value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
 	): void {
-		super.onChanged((_key, value) => {
-			callback(value);
-		}, signal);
-	}
+		const changeHandler = (
+			changes: Record<string, chrome.storage.StorageChange>,
+			area: chrome.storage.AreaName,
+		) => {
+			const changedItem = changes[this.key];
+			if (area === this.area && changedItem) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
+				callback(changedItem.newValue);
+			}
+		};
 
-	protected override getRawStorageKey(_secondaryKey: string): string {
-		return this.key;
-	}
-
-	protected override getSecondaryStorageKey(rawKey: string): string | false {
-		return rawKey === this.key ? '' : false;
+		chrome.storage.onChanged.addListener(changeHandler);
+		signal?.addEventListener('abort', () => {
+			chrome.storage.onChanged.removeListener(changeHandler);
+		}, {
+			once: true,
+		});
 	}
 }
