@@ -2,71 +2,79 @@ import {StorageItemMap, type StorageItemMapOptions} from './storage-item-map.js'
 
 export type StorageItemOptions<T> = StorageItemMapOptions<T>;
 
-// Helper class that overrides key generation to use a specific raw key
-class SingleKeyStorageMap<Base, Return = Base | undefined> extends StorageItemMap<Base, Return> {
-	constructor(
-		private readonly rawKey: string,
-		options: StorageItemMapOptions<Exclude<Return, undefined>> = {},
-	) {
-		super('', options);
-	}
-
-	protected override getRawStorageKey(_secondaryKey: string): string {
-		return this.rawKey;
-	}
-
-	protected override getSecondaryStorageKey(rawKey: string): string | false {
-		return rawKey === this.rawKey ? '' : false;
-	}
-}
-
 export class StorageItem<
 	/** Only specify this if you don't have a default value */
 	Base,
 
 	/** The return type will be undefined unless you provide a default value */
 	Return = Base | undefined,
-> {
+> extends StorageItemMap<Base, Return> {
 	private static get defaultSecondaryKey(): string {
 		return '';
 	}
 
 	readonly key: string;
 	readonly area: chrome.storage.AreaName;
-	readonly defaultValue?: Return;
 
 	/** @deprecated Use `onChanged` instead */
 	onChange = this.onChanged;
 
-	private readonly _map: SingleKeyStorageMap<Base, Return>;
+	// Store references to parent methods before overriding
+	private readonly _superGet: (secondaryKey: string) => Promise<Return>;
+	private readonly _superSet: (secondaryKey: string, value: Exclude<Return, undefined>) => Promise<void>;
+	private readonly _superHas: (secondaryKey: string) => Promise<boolean>;
+	private readonly _superRemove: (secondaryKey: string) => Promise<void>;
+	private readonly _superOnChanged: (callback: (key: string, value: Exclude<Return, undefined>) => void, signal?: AbortSignal) => void;
 
 	constructor(
 		key: string,
 		options: StorageItemOptions<Exclude<Return, undefined>> = {},
 	) {
-		// Use composition with a SingleKeyStorageMap that handles the key mapping
-		this._map = new SingleKeyStorageMap(key, options);
-
+		super('', options);
 		this.key = key;
-		this.area = this._map.areaName;
-		this.defaultValue = this._map.defaultValue;
+		this.area = this.areaName;
+
+		// Save references to parent methods
+		this._superGet = super.get;
+		this._superSet = super.set;
+		this._superHas = super.has;
+		this._superRemove = super.remove;
+		this._superOnChanged = super.onChanged;
 	}
 
-	get = async (): Promise<Return> => this._map.get(StorageItem.defaultSecondaryKey);
+	// Override parent methods to match StorageItem's API (no secondaryKey parameter)
+	override get = async (): Promise<Return> => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Assumes the user never uses the Storage API directly
+		return this._superGet(StorageItem.defaultSecondaryKey);
+	};
 
-	set = async (value: Exclude<Return, undefined>): Promise<void> =>
-		this._map.set(StorageItem.defaultSecondaryKey, value);
+	// @ts-expect-error - Overriding with different signature for single-key API
+	override set = async (value: Exclude<Return, undefined>): Promise<void> => {
+		await this._superSet(StorageItem.defaultSecondaryKey, value);
+	};
 
-	has = async (): Promise<boolean> => this._map.has(StorageItem.defaultSecondaryKey);
+	override has = async (): Promise<boolean> => this._superHas(StorageItem.defaultSecondaryKey);
 
-	remove = async (): Promise<void> => this._map.remove(StorageItem.defaultSecondaryKey);
+	override remove = async (): Promise<void> => {
+		await this._superRemove(StorageItem.defaultSecondaryKey);
+	};
 
-	onChanged(
+	// @ts-expect-error - Overriding with different signature for single-key API
+	override onChanged(
 		callback: (value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
 	): void {
-		this._map.onChanged((_key, value) => {
+		this._superOnChanged((_key, value) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
 			callback(value);
 		}, signal);
+	}
+
+	protected override getRawStorageKey(_secondaryKey: string): string {
+		return this.key;
+	}
+
+	protected override getSecondaryStorageKey(rawKey: string): string | false {
+		return rawKey === this.key ? '' : false;
 	}
 }
