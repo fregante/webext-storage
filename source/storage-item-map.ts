@@ -80,7 +80,7 @@ export class StorageItemMap<
 
 			for (const rawKey of Object.keys(changes)) {
 				const secondaryKey = this.getSecondaryStorageKey(rawKey);
-				if (secondaryKey) {
+				if (secondaryKey !== false) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
 					callback(secondaryKey, changes[rawKey]!.newValue);
 				}
@@ -95,11 +95,11 @@ export class StorageItemMap<
 		});
 	}
 
-	private getRawStorageKey(secondaryKey: string): string {
+	protected getRawStorageKey(secondaryKey: string): string {
 		return this.prefix + secondaryKey;
 	}
 
-	private getSecondaryStorageKey(rawKey: string): string | false {
+	protected getSecondaryStorageKey(rawKey: string): string | false {
 		return rawKey.startsWith(this.prefix) && rawKey.slice(this.prefix.length);
 	}
 }
