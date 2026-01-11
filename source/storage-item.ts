@@ -2,6 +2,24 @@ import {StorageItemMap, type StorageItemMapOptions} from './storage-item-map.js'
 
 export type StorageItemOptions<T> = StorageItemMapOptions<T>;
 
+// Helper class that overrides key generation to use a specific raw key
+class SingleKeyStorageMap<Base, Return = Base | undefined> extends StorageItemMap<Base, Return> {
+	constructor(
+		private readonly rawKey: string,
+		options: StorageItemMapOptions<Exclude<Return, undefined>> = {},
+	) {
+		super('', options);
+	}
+
+	protected override getRawStorageKey(_secondaryKey: string): string {
+		return this.rawKey;
+	}
+
+	protected override getSecondaryStorageKey(rawKey: string): string | false {
+		return rawKey === this.rawKey ? '' : false;
+	}
+}
+
 export class StorageItem<
 	/** Only specify this if you don't have a default value */
 	Base,
@@ -20,23 +38,14 @@ export class StorageItem<
 	/** @deprecated Use `onChanged` instead */
 	onChange = this.onChanged;
 
-	private readonly _map: StorageItemMap<Base, Return>;
+	private readonly _map: SingleKeyStorageMap<Base, Return>;
 
 	constructor(
 		key: string,
 		options: StorageItemOptions<Exclude<Return, undefined>> = {},
 	) {
-		// Use composition with a custom StorageItemMap subclass
-		// that overrides getRawStorageKey to return our key directly
-		this._map = new (class extends StorageItemMap<Base, Return> {
-			protected override getRawStorageKey(_secondaryKey: string): string {
-				return key;
-			}
-
-			protected override getSecondaryStorageKey(rawKey: string): string | false {
-				return rawKey === key ? '' : false;
-			}
-		})('', options);
+		// Use composition with a SingleKeyStorageMap that handles the key mapping
+		this._map = new SingleKeyStorageMap(key, options);
 
 		this.key = key;
 		this.area = this._map.areaName;
