@@ -19,13 +19,6 @@ export class StorageItem<
 	/** @deprecated Use `onChanged` instead */
 	onChange = this.onChanged;
 
-	// Store references to parent methods before overriding
-	private readonly _superGet: (secondaryKey: string) => Promise<Return>;
-	private readonly _superSet: (secondaryKey: string, value: Exclude<Return, undefined>) => Promise<void>;
-	private readonly _superHas: (secondaryKey: string) => Promise<boolean>;
-	private readonly _superRemove: (secondaryKey: string) => Promise<void>;
-	private readonly _superOnChanged: (callback: (key: string, value: Exclude<Return, undefined>) => void, signal?: AbortSignal) => void;
-
 	constructor(
 		key: string,
 		options: StorageItemOptions<Exclude<Return, undefined>> = {},
@@ -33,39 +26,31 @@ export class StorageItem<
 		super('', options);
 		this.key = key;
 		this.area = this.areaName;
-
-		// Save references to parent methods
-		this._superGet = super.get;
-		this._superSet = super.set;
-		this._superHas = super.has;
-		this._superRemove = super.remove;
-		this._superOnChanged = super.onChanged;
 	}
 
-	// Override parent methods to match StorageItem's API (no secondaryKey parameter)
-	override get = async (): Promise<Return> => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Assumes the user never uses the Storage API directly
-		return this._superGet(StorageItem.defaultSecondaryKey);
-	};
+	override async get(): Promise<Return> {
+		return super.get(StorageItem.defaultSecondaryKey);
+	}
 
 	// @ts-expect-error - Overriding with different signature for single-key API
-	override set = async (value: Exclude<Return, undefined>): Promise<void> => {
-		await this._superSet(StorageItem.defaultSecondaryKey, value);
-	};
+	override async set(value: Exclude<Return, undefined>): Promise<void> {
+		await super.set(StorageItem.defaultSecondaryKey, value);
+	}
 
-	override has = async (): Promise<boolean> => this._superHas(StorageItem.defaultSecondaryKey);
+	override async has(): Promise<boolean> {
+		return super.has(StorageItem.defaultSecondaryKey);
+	}
 
-	override remove = async (): Promise<void> => {
-		await this._superRemove(StorageItem.defaultSecondaryKey);
-	};
+	override async remove(): Promise<void> {
+		await super.remove(StorageItem.defaultSecondaryKey);
+	}
 
 	// @ts-expect-error - Overriding with different signature for single-key API
 	override onChanged(
 		callback: (value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
 	): void {
-		this._superOnChanged((_key, value) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
+		super.onChanged((_key, value) => {
 			callback(value);
 		}, signal);
 	}
