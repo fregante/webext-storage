@@ -28,14 +28,14 @@ export class StorageItemMap<
 		this.defaultValue = defaultValue;
 	}
 
-	has = async (secondaryKey: string): Promise<boolean> => {
+	async has(secondaryKey: string): Promise<boolean> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		return result[rawStorageKey] !== undefined;
-	};
+	}
 
-	get = async (secondaryKey: string): Promise<Return> => {
+	async get(secondaryKey: string): Promise<Return> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
@@ -45,29 +45,48 @@ export class StorageItemMap<
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Assumes the user never uses the Storage API directly for this key
 		return result[rawStorageKey];
-	};
+	}
 
-	set = async (secondaryKey: string, value: Exclude<Return, undefined>): Promise<void> => {
+	// Support both StorageItemMap(key, value) and StorageItem(value) signatures
+	async set(secondaryKeyOrValue: string | Exclude<Return, undefined>, value?: Exclude<Return, undefined>): Promise<void> {
+		let secondaryKey: string;
+		let actualValue: Exclude<Return, undefined> | undefined;
+
+		// Check if being called as StorageItem.set(value) or StorageItemMap.set(key, value?)
+		// StorageItem always passes empty prefix to constructor, so prefix === ':::'
+		const isStorageItem = this.prefix === ':::' && arguments.length === 1;
+
+		if (isStorageItem) {
+			// Single argument from StorageItem: treated as value
+			secondaryKey = '';
+			actualValue = secondaryKeyOrValue as Exclude<Return, undefined>;
+		} else {
+			// StorageItemMap: first arg is key, second is optional value
+			secondaryKey = secondaryKeyOrValue as string;
+			actualValue = value;
+		}
+
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
-		if (value === undefined) {
+		if (actualValue === undefined) {
 			await chromeP.storage[this.areaName].remove(rawStorageKey);
 		} else {
-			await chromeP.storage[this.areaName].set({[rawStorageKey]: value});
+			await chromeP.storage[this.areaName].set({[rawStorageKey]: actualValue});
 		}
-	};
+	}
 
-	remove = async (secondaryKey: string): Promise<void> => {
+	async remove(secondaryKey: string): Promise<void> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		await chromeP.storage[this.areaName].remove(rawStorageKey);
-	};
+	}
 
 	/** @deprecated Only here to match the Map API; use `remove` instead */
-	// eslint-disable-next-line @typescript-eslint/member-ordering -- invalid
-	delete = this.remove;
+	async delete(secondaryKey: string): Promise<void> {
+		return this.remove(secondaryKey);
+	}
 
 	onChanged(
-		callback: (key: string, value: Exclude<Return, undefined>) => void,
+		callback: ((key: string, value: Exclude<Return, undefined>) => void) | ((value: Exclude<Return, undefined>) => void),
 		signal?: AbortSignal,
 	): void {
 		const changeHandler = (
@@ -80,9 +99,17 @@ export class StorageItemMap<
 
 			for (const rawKey of Object.keys(changes)) {
 				const secondaryKey = this.getSecondaryStorageKey(rawKey);
-				if (secondaryKey) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
-					callback(secondaryKey, changes[rawKey]!.newValue);
+				if (secondaryKey !== false) {
+					// Check if callback expects one or two parameters
+					if (callback.length === 1) {
+						// StorageItem signature: callback(value)
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
+						(callback as (value: Exclude<Return, undefined>) => void)(changes[rawKey]!.newValue);
+					} else {
+						// StorageItemMap signature: callback(key, value)
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
+						(callback as (key: string, value: Exclude<Return, undefined>) => void)(secondaryKey, changes[rawKey]!.newValue);
+					}
 				}
 			}
 		};
@@ -95,11 +122,11 @@ export class StorageItemMap<
 		});
 	}
 
-	private getRawStorageKey(secondaryKey: string): string {
+	protected getRawStorageKey(secondaryKey: string): string {
 		return this.prefix + secondaryKey;
 	}
 
-	private getSecondaryStorageKey(rawKey: string): string | false {
+	protected getSecondaryStorageKey(rawKey: string): string | false {
 		return rawKey.startsWith(this.prefix) && rawKey.slice(this.prefix.length);
 	}
 }
