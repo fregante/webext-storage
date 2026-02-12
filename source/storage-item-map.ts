@@ -16,6 +16,8 @@ export class StorageItemMap<
 	readonly areaName: chrome.storage.AreaName;
 	readonly defaultValue?: Return;
 
+	[Symbol.asyncIterator] = this.entries;
+
 	constructor(
 		key: string,
 		{
@@ -65,6 +67,19 @@ export class StorageItemMap<
 	/** @deprecated Only here to match the Map API; use `remove` instead */
 	// eslint-disable-next-line @typescript-eslint/member-ordering -- invalid
 	delete = this.remove;
+
+	async * entries(): AsyncIterableIterator<[string, Exclude<Return, undefined>]> {
+		const allItems = await chromeP.storage[this.areaName].get();
+
+		for (const rawKey of Object.keys(allItems)) {
+			const secondaryKey = this.getSecondaryStorageKey(rawKey);
+			if (secondaryKey) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Assumes the user never uses the Storage API directly for this key
+				const value = allItems[rawKey];
+				yield [secondaryKey, value];
+			}
+		}
+	}
 
 	onChanged(
 		callback: (key: string, value: Exclude<Return, undefined>) => void,

@@ -102,3 +102,60 @@ test('onChanged() is called for the correct item', async () => {
 	chrome.storage.onChanged.trigger({'distance:::jupiter': 10e10}, 'local');
 	expect(spy).toHaveBeenCalled();
 });
+
+test('entries() with empty storage', async () => {
+	const items = new StorageItemMap('fruits');
+	const entries = [];
+	for await (const entry of items.entries()) {
+		entries.push(entry);
+	}
+
+	assert.deepEqual(entries, []);
+});
+
+test('entries() with storage items', async () => {
+	const items = new StorageItemMap('fruits');
+	const wholeCache = {
+		'fruits:::apple': 'red',
+		'fruits:::banana': 'yellow',
+		'other:::orange': 'orange',
+	};
+	createStorage(wholeCache);
+	// Mock get() without arguments to return all items
+	chrome.storage.local.get.withArgs().yields(wholeCache);
+	chrome.storage.local.get.withArgs(undefined).yields(wholeCache);
+
+	const entries = [];
+	for await (const entry of items.entries()) {
+		entries.push(entry);
+	}
+
+	assert.equal(entries.length, 2);
+	assert.deepEqual(entries, [
+		['apple', 'red'],
+		['banana', 'yellow'],
+	]);
+});
+
+test('async iteration using for-await-of', async () => {
+	const items = new StorageItemMap('colors');
+	const wholeCache = {
+		'colors:::red': '#FF0000',
+		'colors:::green': '#00FF00',
+		'colors:::blue': '#0000FF',
+	};
+	createStorage(wholeCache);
+	// Mock get() without arguments to return all items
+	chrome.storage.local.get.withArgs().yields(wholeCache);
+	chrome.storage.local.get.withArgs(undefined).yields(wholeCache);
+
+	const collected = [];
+	for await (const [key, value] of items) {
+		collected.push([key, value]);
+	}
+
+	assert.equal(collected.length, 3);
+	expect(collected).toContainEqual(['red', '#FF0000']);
+	expect(collected).toContainEqual(['green', '#00FF00']);
+	expect(collected).toContainEqual(['blue', '#0000FF']);
+});
