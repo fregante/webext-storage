@@ -167,9 +167,10 @@ test('entries() method should be bound', async () => {
 	chrome.storage.local.get.withArgs().yields(wholeCache);
 	chrome.storage.local.get.withArgs(undefined).yields(wholeCache);
 
-	// Extract the method and call it (testing binding like other tests do)
+	// Test that method binding works when extracted (like other methods in this class)
+	const {entries} = items;
 	const result = [];
-	for await (const entry of (0, items.entries)()) {
+	for await (const entry of entries()) {
 		result.push(entry);
 	}
 
