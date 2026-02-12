@@ -27,6 +27,16 @@ await names.set({name: 'Ugo'});
 names.onChanged(username, newName => {
 	console.log('The user', username, 'set their new name to', newName);
 });
+
+// Iterate over all entries (Map feature parity)
+for await (const [key, value] of names.entries()) {
+	console.log(key, value);
+}
+
+// Or use the async iterator directly
+for await (const [key, value] of names) {
+	console.log(key, value);
+}
 ```
 ## [StorageItem ↗️](./storage-item.md)
 
