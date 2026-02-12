@@ -159,3 +159,20 @@ test('async iteration using for-await-of', async () => {
 	expect(collected).toContainEqual(['green', '#00FF00']);
 	expect(collected).toContainEqual(['blue', '#0000FF']);
 });
+
+test('entries() method should be bound', async () => {
+	const items = new StorageItemMap('test');
+	const wholeCache = {'test:::key': 'value'};
+	createStorage(wholeCache);
+	chrome.storage.local.get.withArgs().yields(wholeCache);
+	chrome.storage.local.get.withArgs(undefined).yields(wholeCache);
+
+	// Extract the method and call it (testing binding like other tests do)
+	const result = [];
+	for await (const entry of (0, items.entries)()) {
+		result.push(entry);
+	}
+
+	assert.equal(result.length, 1);
+	assert.deepEqual(result[0], ['key', 'value']);
+});

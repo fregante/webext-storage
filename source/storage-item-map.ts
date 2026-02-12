@@ -16,8 +16,6 @@ export class StorageItemMap<
 	readonly areaName: chrome.storage.AreaName;
 	readonly defaultValue?: Return;
 
-	[Symbol.asyncIterator] = this.entries;
-
 	constructor(
 		key: string,
 		{
@@ -28,6 +26,8 @@ export class StorageItemMap<
 		this.prefix = `${key}:::`;
 		this.areaName = area;
 		this.defaultValue = defaultValue;
+		// Bind the generator method to maintain consistent binding behavior with other methods
+		this.entries = this.entries.bind(this);
 	}
 
 	has = async (secondaryKey: string): Promise<boolean> => {
@@ -80,6 +80,9 @@ export class StorageItemMap<
 			}
 		}
 	}
+
+	// eslint-disable-next-line @typescript-eslint/member-ordering -- Must be after entries() and bound in constructor
+	[Symbol.asyncIterator] = this.entries;
 
 	onChanged(
 		callback: (key: string, value: Exclude<Return, undefined>) => void,
