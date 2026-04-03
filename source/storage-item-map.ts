@@ -88,7 +88,6 @@ export class StorageItemMap<
 				// Workaround for https://github.com/w3c/webextensions/issues/511
 				if (
 					secondaryKey
-					&& changes[rawKey]!.newValue !== changes[rawKey]!.oldValue
 					&& JSON.stringify(changes[rawKey]!.newValue) !== JSON.stringify(changes[rawKey]!.oldValue)
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly

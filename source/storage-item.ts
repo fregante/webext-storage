@@ -77,7 +77,6 @@ export class StorageItem<
 				area === this.area
 				&& changedItem
 				// Workaround for https://github.com/w3c/webextensions/issues/511
-				&& changedItem.newValue !== changedItem.oldValue
 				&& JSON.stringify(changedItem.newValue) !== JSON.stringify(changedItem.oldValue)
 			) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
