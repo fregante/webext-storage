@@ -11,3 +11,5 @@ logs
 dist
 distribution
 .built
+source/*.js
+source/*.d.ts
