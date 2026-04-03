@@ -31,15 +31,6 @@
 		"test:watch": "vitest",
 		"watch": "tsc --watch"
 	},
-	"xo": {
-		"envs": [
-			"browser"
-		],
-		"globals": [
-			"chrome"
-		]
-	},
-	"dependencies": {},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^8.1.0",
 		"@types/chrome": "^0.1.39",
