@@ -31,7 +31,7 @@ export class StorageItem<
 		this.defaultValue = defaultValue;
 	}
 
-	get = async (): Promise<Return> => {
+	async get(): Promise<Return> {
 		const result = await this.#storage.get(this.key);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		if (result[this.key] === undefined) {
@@ -40,26 +40,26 @@ export class StorageItem<
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Assumes the user never uses the Storage API directly
 		return result[this.key];
-	};
+	}
 
-	set = async (value: Exclude<Return, undefined>): Promise<void> => {
+	async set(value: Exclude<Return, undefined>): Promise<void> {
 		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
 		if (value === undefined) {
 			await this.#storage.remove(this.key);
 		} else {
 			await this.#storage.set({[this.key]: value});
 		}
-	};
+	}
 
-	has = async (): Promise<boolean> => {
+	async has(): Promise<boolean> {
 		const result = await this.#storage.get(this.key);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		return result[this.key] !== undefined;
-	};
+	}
 
-	remove = async (): Promise<void> => {
+	async remove(): Promise<void> {
 		await this.#storage.remove(this.key);
-	};
+	}
 
 	onChanged(
 		callback: (value: Exclude<Return, undefined>) => void,
