@@ -11,4 +11,3 @@ logs
 dist
 distribution
 .built
-source/*.d.ts
