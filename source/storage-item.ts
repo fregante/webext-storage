@@ -18,6 +18,11 @@ export class StorageItem<
 	/** @deprecated Use `onChanged` instead */
 	onChange = this.onChanged;
 
+	get #storage(): chrome.storage.StorageArea {
+		assertChromeStorageAvailable();
+		return chrome.storage[this.area];
+	}
+
 	constructor(
 		readonly key: string,
 		{
@@ -30,8 +35,7 @@ export class StorageItem<
 	}
 
 	get = async (): Promise<Return> => {
-		assertChromeStorageAvailable();
-		const result = await chrome.storage[this.area].get(this.key);
+		const result = await this.#storage.get(this.key);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		if (result[this.key] === undefined) {
 			return this.defaultValue as Return;
@@ -42,25 +46,22 @@ export class StorageItem<
 	};
 
 	set = async (value: Exclude<Return, undefined>): Promise<void> => {
-		assertChromeStorageAvailable();
 		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
 		if (value === undefined) {
-			await chrome.storage[this.area].remove(this.key);
+			await this.#storage.remove(this.key);
 		} else {
-			await chrome.storage[this.area].set({[this.key]: value});
+			await this.#storage.set({[this.key]: value});
 		}
 	};
 
 	has = async (): Promise<boolean> => {
-		assertChromeStorageAvailable();
-		const result = await chrome.storage[this.area].get(this.key);
+		const result = await this.#storage.get(this.key);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		return result[this.key] !== undefined;
 	};
 
 	remove = async (): Promise<void> => {
-		assertChromeStorageAvailable();
-		await chrome.storage[this.area].remove(this.key);
+		await this.#storage.remove(this.key);
 	};
 
 	onChanged(
