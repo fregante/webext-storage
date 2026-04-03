@@ -1,4 +1,4 @@
-import {assertChromeStorageAvailable} from './utils.js';
+import {assertChromeStorageAvailable, hasStorageValueChanged} from './utils.js';
 
 export type StorageItemMapOptions<T> = {
 	area?: chrome.storage.AreaName;
@@ -86,10 +86,9 @@ export class StorageItemMap<
 
 			for (const rawKey of Object.keys(changes)) {
 				const secondaryKey = this.getSecondaryStorageKey(rawKey);
-				// Workaround for https://github.com/w3c/webextensions/issues/511
 				if (
 					secondaryKey
-					&& JSON.stringify(changes[rawKey]!.newValue) !== JSON.stringify(changes[rawKey]!.oldValue)
+					&& hasStorageValueChanged(changes[rawKey]!)
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
 					callback(secondaryKey, changes[rawKey]!.newValue);

@@ -17,6 +17,7 @@ function createStorage(wholeCache, area = 'local') {
 
 beforeEach(() => {
 	vi.resetAllMocks();
+	vi.unstubAllGlobals();
 	chrome.storage.onChanged.clearListeners();
 	chrome.storage.local.get.mockResolvedValue({});
 	chrome.storage.local.set.mockResolvedValue(undefined);
@@ -107,6 +108,7 @@ test('onChanged() is called for the correct item', async () => {
 });
 
 test('onChanged() is not called when the value is unchanged', async () => {
+	vi.stubGlobal('navigator', {userAgent: 'Mozilla/5.0 Firefox/100.0'});
 	const name = new StorageItemMap('distance');
 	const spy = vi.fn();
 	name.onChanged(spy);
