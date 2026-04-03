@@ -16,6 +16,11 @@ export class StorageItemMap<
 	readonly areaName: chrome.storage.AreaName;
 	readonly defaultValue?: Return;
 
+	get #storage(): chrome.storage.StorageArea {
+		assertChromeStorageAvailable();
+		return chrome.storage[this.areaName];
+	}
+
 	constructor(
 		key: string,
 		{
@@ -29,17 +34,15 @@ export class StorageItemMap<
 	}
 
 	has = async (secondaryKey: string): Promise<boolean> => {
-		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		const result = await chrome.storage[this.areaName].get(rawStorageKey);
+		const result = await this.#storage.get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		return result[rawStorageKey] !== undefined;
 	};
 
 	get = async (secondaryKey: string): Promise<Return> => {
-		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		const result = await chrome.storage[this.areaName].get(rawStorageKey);
+		const result = await this.#storage.get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		if (result[rawStorageKey] === undefined) {
 			return this.defaultValue as Return;
@@ -50,20 +53,18 @@ export class StorageItemMap<
 	};
 
 	set = async (secondaryKey: string, value: Exclude<Return, undefined>): Promise<void> => {
-		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
 		if (value === undefined) {
-			await chrome.storage[this.areaName].remove(rawStorageKey);
+			await this.#storage.remove(rawStorageKey);
 		} else {
-			await chrome.storage[this.areaName].set({[rawStorageKey]: value});
+			await this.#storage.set({[rawStorageKey]: value});
 		}
 	};
 
 	remove = async (secondaryKey: string): Promise<void> => {
-		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		await chrome.storage[this.areaName].remove(rawStorageKey);
+		await this.#storage.remove(rawStorageKey);
 	};
 
 	/** @deprecated Only here to match the Map API; use `remove` instead */
