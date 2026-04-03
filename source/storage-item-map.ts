@@ -1,4 +1,5 @@
 import chromeP from 'webext-polyfill-kinda';
+import {assertChromeStorageAvailable} from './utils.js';
 
 export type StorageItemMapOptions<T> = {
 	area?: chrome.storage.AreaName;
@@ -29,6 +30,7 @@ export class StorageItemMap<
 	}
 
 	has = async (secondaryKey: string): Promise<boolean> => {
+		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
@@ -36,6 +38,7 @@ export class StorageItemMap<
 	};
 
 	get = async (secondaryKey: string): Promise<Return> => {
+		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
@@ -48,6 +51,7 @@ export class StorageItemMap<
 	};
 
 	set = async (secondaryKey: string, value: Exclude<Return, undefined>): Promise<void> => {
+		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
 		if (value === undefined) {
@@ -58,6 +62,7 @@ export class StorageItemMap<
 	};
 
 	remove = async (secondaryKey: string): Promise<void> => {
+		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		await chromeP.storage[this.areaName].remove(rawStorageKey);
 	};
@@ -70,6 +75,7 @@ export class StorageItemMap<
 		callback: (key: string, value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
 	): void {
+		assertChromeStorageAvailable();
 		const changeHandler = (
 			changes: Record<string, chrome.storage.StorageChange>,
 			area: chrome.storage.AreaName,

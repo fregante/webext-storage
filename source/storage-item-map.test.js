@@ -102,3 +102,18 @@ test('onChanged() is called for the correct item', async () => {
 	chrome.storage.onChanged.trigger({'distance:::jupiter': 10e10}, 'local');
 	expect(spy).toHaveBeenCalled();
 });
+
+test('throws when chrome.storage is not available', async () => {
+	const originalChrome = globalThis.chrome;
+	try {
+		globalThis.chrome = undefined;
+		const expectedError = /`chrome\.storage` is not available/;
+		await expect(testItem.get('rico')).rejects.toThrow(expectedError);
+		await expect(testItem.set('rico', 250)).rejects.toThrow(expectedError);
+		await expect(testItem.has('rico')).rejects.toThrow(expectedError);
+		await expect(testItem.remove('rico')).rejects.toThrow(expectedError);
+		expect(() => testItem.onChanged(() => {})).toThrow(expectedError);
+	} finally {
+		globalThis.chrome = originalChrome;
+	}
+});
