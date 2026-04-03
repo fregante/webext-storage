@@ -15,9 +15,6 @@ export class StorageItem<
 	readonly area: chrome.storage.AreaName;
 	readonly defaultValue?: Return;
 
-	/** @deprecated Use `onChanged` instead */
-	onChange = this.onChanged;
-
 	get #storage(): chrome.storage.StorageArea {
 		assertChromeStorageAvailable();
 		return chrome.storage[this.area];
