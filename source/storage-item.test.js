@@ -101,6 +101,21 @@ test('onChanged() is called for the correct item', async () => {
 	expect(spy).toHaveBeenCalled();
 });
 
+test('onChanged() is not called on Firefox when value is unchanged', async () => {
+	vi.stubGlobal('navigator', {userAgent: 'Mozilla/5.0 Firefox/120.0'});
+	try {
+		const name = new StorageItem('name');
+		const spy = vi.fn();
+		name.onChanged(spy);
+		chrome.storage.onChanged.callListeners({name: {newValue: 'Anne', oldValue: 'Anne'}}, 'local');
+		expect(spy).not.toHaveBeenCalled();
+		chrome.storage.onChanged.callListeners({name: {newValue: 'Bob', oldValue: 'Anne'}}, 'local');
+		expect(spy).toHaveBeenCalledOnce();
+	} finally {
+		vi.unstubAllGlobals();
+	}
+});
+
 test('throws when chrome.storage is not available', async () => {
 	const originalChrome = globalThis.chrome;
 	try {
