@@ -8,5 +8,6 @@ export function assertChromeStorageAvailable(): void {
 // Firefox fires onChanged even when set() is called with the same value
 export function hasStorageValueChanged(change: chrome.storage.StorageChange): boolean {
 	// eslint-disable-next-line n/no-unsupported-features/node-builtins -- browser extension context, not Node.js
-	return !(globalThis.navigator?.userAgent.includes('Firefox') ?? false) || JSON.stringify(change.newValue) !== JSON.stringify(change.oldValue);
+	return !globalThis.navigator?.userAgent.includes('Firefox')
+		|| JSON.stringify(change.newValue) !== JSON.stringify(change.oldValue);
 }
