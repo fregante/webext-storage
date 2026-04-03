@@ -1,4 +1,4 @@
-import {assertChromeStorageAvailable} from './utils.js';
+import {assertChromeStorageAvailable, hasStorageValueChanged} from './utils.js';
 
 export type StorageItemOptions<T> = {
 	area?: chrome.storage.AreaName;
@@ -71,7 +71,7 @@ export class StorageItem<
 			area: chrome.storage.AreaName,
 		) => {
 			const changedItem = changes[this.key];
-			if (area === this.area && changedItem) {
+			if (area === this.area && changedItem && hasStorageValueChanged(changedItem)) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
 				callback(changedItem.newValue);
 			}
