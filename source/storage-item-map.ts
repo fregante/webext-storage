@@ -67,6 +67,10 @@ export class StorageItemMap<
 		await this.#storage.remove(rawStorageKey);
 	};
 
+	/** @deprecated Only here to match the Map API; use `remove` instead */
+	// eslint-disable-next-line @typescript-eslint/member-ordering -- invalid
+	delete = this.remove;
+
 	onChanged(
 		callback: (key: string, value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
