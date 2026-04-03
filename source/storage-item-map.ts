@@ -1,4 +1,3 @@
-import chromeP from 'webext-polyfill-kinda';
 import {assertChromeStorageAvailable} from './utils.js';
 
 export type StorageItemMapOptions<T> = {
@@ -32,7 +31,7 @@ export class StorageItemMap<
 	has = async (secondaryKey: string): Promise<boolean> => {
 		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
+		const result = await chrome.storage[this.areaName].get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		return result[rawStorageKey] !== undefined;
 	};
@@ -40,7 +39,7 @@ export class StorageItemMap<
 	get = async (secondaryKey: string): Promise<Return> => {
 		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
+		const result = await chrome.storage[this.areaName].get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		if (result[rawStorageKey] === undefined) {
 			return this.defaultValue as Return;
@@ -55,16 +54,16 @@ export class StorageItemMap<
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
 		if (value === undefined) {
-			await chromeP.storage[this.areaName].remove(rawStorageKey);
+			await chrome.storage[this.areaName].remove(rawStorageKey);
 		} else {
-			await chromeP.storage[this.areaName].set({[rawStorageKey]: value});
+			await chrome.storage[this.areaName].set({[rawStorageKey]: value});
 		}
 	};
 
 	remove = async (secondaryKey: string): Promise<void> => {
 		assertChromeStorageAvailable();
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		await chromeP.storage[this.areaName].remove(rawStorageKey);
+		await chrome.storage[this.areaName].remove(rawStorageKey);
 	};
 
 	/** @deprecated Only here to match the Map API; use `remove` instead */

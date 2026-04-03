@@ -1,4 +1,3 @@
-import chromeP from 'webext-polyfill-kinda';
 import {assertChromeStorageAvailable} from './utils.js';
 
 export type StorageItemOptions<T> = {
@@ -32,7 +31,7 @@ export class StorageItem<
 
 	get = async (): Promise<Return> => {
 		assertChromeStorageAvailable();
-		const result = await chromeP.storage[this.area].get(this.key);
+		const result = await chrome.storage[this.area].get(this.key);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		if (result[this.key] === undefined) {
 			return this.defaultValue as Return;
@@ -46,22 +45,22 @@ export class StorageItem<
 		assertChromeStorageAvailable();
 		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
 		if (value === undefined) {
-			await chromeP.storage[this.area].remove(this.key);
+			await chrome.storage[this.area].remove(this.key);
 		} else {
-			await chromeP.storage[this.area].set({[this.key]: value});
+			await chrome.storage[this.area].set({[this.key]: value});
 		}
 	};
 
 	has = async (): Promise<boolean> => {
 		assertChromeStorageAvailable();
-		const result = await chromeP.storage[this.area].get(this.key);
+		const result = await chrome.storage[this.area].get(this.key);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		return result[this.key] !== undefined;
 	};
 
 	remove = async (): Promise<void> => {
 		assertChromeStorageAvailable();
-		await chromeP.storage[this.area].remove(this.key);
+		await chrome.storage[this.area].remove(this.key);
 	};
 
 	onChanged(
