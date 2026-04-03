@@ -99,12 +99,24 @@ test('onChanged() is called for the correct item', async () => {
 	const name = new StorageItem('name');
 	const spy = vi.fn();
 	name.onChanged(spy);
-	chrome.storage.onChanged.callListeners({unrelatedKey: 123}, 'local');
+	chrome.storage.onChanged.callListeners({unrelatedKey: {newValue: 123}}, 'local');
 	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.callListeners({name: 'Anne'}, 'sync');
+	chrome.storage.onChanged.callListeners({name: {newValue: 'Anne'}}, 'sync');
 	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.callListeners({name: 'Anne'}, 'local');
-	expect(spy).toHaveBeenCalled();
+	chrome.storage.onChanged.callListeners({name: {newValue: 'Anne'}}, 'local');
+	expect(spy).toHaveBeenCalledWith('Anne');
+});
+
+test('onChanged() is not called when the value is unchanged', async () => {
+	const name = new StorageItem('name');
+	const spy = vi.fn();
+	name.onChanged(spy);
+	chrome.storage.onChanged.callListeners({name: {newValue: 'Anne', oldValue: 'Anne'}}, 'local');
+	expect(spy).not.toHaveBeenCalled();
+	chrome.storage.onChanged.callListeners({name: {newValue: {x: 1}, oldValue: {x: 1}}}, 'local');
+	expect(spy).not.toHaveBeenCalled();
+	chrome.storage.onChanged.callListeners({name: {newValue: 'Bob', oldValue: 'Anne'}}, 'local');
+	expect(spy).toHaveBeenCalledWith('Bob');
 });
 
 test('throws when chrome.storage is not available', async () => {
