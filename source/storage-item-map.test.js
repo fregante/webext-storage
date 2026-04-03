@@ -6,19 +6,22 @@ import {StorageItemMap} from 'webext-storage';
 const testItem = new StorageItemMap('height');
 
 function createStorage(wholeCache, area = 'local') {
-	for (const [key, data] of Object.entries(wholeCache)) {
-		chrome.storage[area].get
-			.withArgs(key)
-			.yields({[key]: data});
-	}
+	chrome.storage[area].get.mockImplementation(key => {
+		if (key in wholeCache) {
+			return Promise.resolve({[key]: wholeCache[key]});
+		}
+
+		return Promise.resolve({});
+	});
 }
 
 beforeEach(() => {
-	chrome.flush();
-	chrome.storage.local.get.yields({});
-	chrome.storage.local.set.yields(undefined);
-	chrome.storage.local.remove.yields(undefined);
-	chrome.storage.sync.get.yields({});
+	vi.resetAllMocks();
+	chrome.storage.onChanged.clearListeners();
+	chrome.storage.local.get.mockResolvedValue({});
+	chrome.storage.local.set.mockResolvedValue(undefined);
+	chrome.storage.local.remove.mockResolvedValue(undefined);
+	chrome.storage.sync.get.mockResolvedValue({});
 });
 
 test('get() with empty storage', async () => {
@@ -46,9 +49,9 @@ test('get() with `sync` storage', async () => {
 	const sync = new StorageItemMap('brands', {area: 'sync'});
 	await sync.get('MacBook');
 
-	assert.equal(chrome.storage.local.get.lastCall, undefined);
+	assert.equal(chrome.storage.local.get.mock.lastCall, undefined);
 
-	const [argument] = chrome.storage.sync.get.lastCall.args;
+	const [argument] = chrome.storage.sync.get.mock.lastCall;
 	assert.deepEqual(argument, 'brands:::MacBook');
 });
 
@@ -57,25 +60,25 @@ test('set(x, undefined) will unset the value', async () => {
 		'height:::rico': 220,
 	});
 	assert.equal(await testItem.set('rico'), undefined);
-	assert.equal(chrome.storage.local.set.lastCall, undefined);
-	const [argument] = chrome.storage.local.remove.lastCall.args;
+	assert.equal(chrome.storage.local.set.mock.lastCall, undefined);
+	const [argument] = chrome.storage.local.remove.mock.lastCall;
 	assert.deepEqual(argument, 'height:::rico');
 });
 
 test('set() with value', async () => {
 	await testItem.set('rico', 250);
-	const [argument1] = chrome.storage.local.set.lastCall.args;
+	const [argument1] = chrome.storage.local.set.mock.lastCall;
 	assert.deepEqual(Object.keys(argument1), ['height:::rico']);
 	assert.equal(argument1['height:::rico'], 250);
 
 	await (0, testItem.set)('luigi', 120);
-	const [argument2] = chrome.storage.local.set.lastCall.args;
+	const [argument2] = chrome.storage.local.set.mock.lastCall;
 	assert.equal(argument2['height:::luigi'], 120, 'get method should be bound');
 });
 
 test('remove()', async () => {
 	await testItem.remove('mario');
-	const [argument] = chrome.storage.local.remove.lastCall.args;
+	const [argument] = chrome.storage.local.remove.mock.lastCall;
 	assert.equal(argument, 'height:::mario');
 });
 
@@ -95,11 +98,11 @@ test('onChanged() is called for the correct item', async () => {
 	const name = new StorageItemMap('distance');
 	const spy = vi.fn();
 	name.onChanged(spy);
-	chrome.storage.onChanged.trigger({unrelatedKey: 123}, 'local');
+	chrome.storage.onChanged.callListeners({unrelatedKey: 123}, 'local');
 	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.trigger({'distance:::jupiter': 10e10}, 'sync');
+	chrome.storage.onChanged.callListeners({'distance:::jupiter': 10e10}, 'sync');
 	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.trigger({'distance:::jupiter': 10e10}, 'local');
+	chrome.storage.onChanged.callListeners({'distance:::jupiter': 10e10}, 'local');
 	expect(spy).toHaveBeenCalled();
 });
 
