@@ -14,6 +14,7 @@ export class StorageItem<
 > {
 	readonly area: chrome.storage.AreaName;
 	readonly defaultValue?: Return;
+	readonly key: string;
 
 	get #storage(): chrome.storage.StorageArea {
 		assertChromeStorageAvailable();
@@ -21,12 +22,13 @@ export class StorageItem<
 	}
 
 	constructor(
-		readonly key: string,
+		key: string,
 		{
 			area = 'local',
 			defaultValue,
 		}: StorageItemOptions<Exclude<Return, undefined>> = {},
 	) {
+		this.key = key;
 		this.area = area;
 		this.defaultValue = defaultValue;
 	}
@@ -35,11 +37,12 @@ export class StorageItem<
 		const result = await this.#storage.get(this.key);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		if (result[this.key] === undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
 			return this.defaultValue as Return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Assumes the user never uses the Storage API directly
-		return result[this.key];
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
+		return result[this.key] as Return;
 	}
 
 	async set(value: Exclude<Return, undefined>): Promise<void> {
@@ -72,8 +75,8 @@ export class StorageItem<
 		) => {
 			const changedItem = changes[this.key];
 			if (area === this.area && changedItem) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
-				callback(changedItem.newValue);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
+				callback(changedItem.newValue as Exclude<Return, undefined>);
 			}
 		};
 
