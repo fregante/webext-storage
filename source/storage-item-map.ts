@@ -73,11 +73,19 @@ export class StorageItemMap<
 		return this.remove(secondaryKey);
 	}
 
+	/**
+	 * Get all secondary keys in the map.
+	 * @returns A promise that resolves to an array of all secondary keys.
+	 */
 	async keys(): Promise<string[]> {
 		const rawKeys = await this.#getRawKeys();
 		return rawKeys.map(key => key.slice(this.prefix.length));
 	}
 
+	/**
+	 * Remove all entries from the map.
+	 * @returns A promise that resolves when all entries have been removed.
+	 */
 	async clear(): Promise<void> {
 		const rawKeys = await this.#getRawKeys();
 		if (rawKeys.length > 0) {
@@ -85,6 +93,11 @@ export class StorageItemMap<
 		}
 	}
 
+	/**
+	 * Iterate over all entries in the map, yielding [key, value] pairs.
+	 * Values are fetched one at a time to avoid loading all storage at once.
+	 * @returns An async iterator of [key, value] pairs.
+	 */
 	async * entries(): AsyncIterableIterator<[string, Exclude<Return, undefined>]> {
 		const rawKeys = await this.#getRawKeys();
 
