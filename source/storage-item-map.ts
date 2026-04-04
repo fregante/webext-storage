@@ -1,4 +1,4 @@
-import chromeP from 'webext-polyfill-kinda';
+import {assertChromeStorageAvailable, hasStorageValueChanged} from './utils.js';
 
 export type StorageItemMapOptions<T> = {
 	area?: chrome.storage.AreaName;
@@ -16,6 +16,11 @@ export class StorageItemMap<
 	readonly areaName: chrome.storage.AreaName;
 	readonly defaultValue?: Return;
 
+	get #storage(): chrome.storage.StorageArea {
+		assertChromeStorageAvailable();
+		return chrome.storage[this.areaName];
+	}
+
 	constructor(
 		key: string,
 		{
@@ -26,50 +31,50 @@ export class StorageItemMap<
 		this.prefix = `${key}:::`;
 		this.areaName = area;
 		this.defaultValue = defaultValue;
-		// Bind the generator method to maintain consistent binding behavior with other methods
-		this.entries = this.entries.bind(this);
 	}
 
-	has = async (secondaryKey: string): Promise<boolean> => {
+	async has(secondaryKey: string): Promise<boolean> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
+		const result = await this.#storage.get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		return result[rawStorageKey] !== undefined;
-	};
+	}
 
-	get = async (secondaryKey: string): Promise<Return> => {
+	async get(secondaryKey: string): Promise<Return> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		const result = await chromeP.storage[this.areaName].get(rawStorageKey);
+		const result = await this.#storage.get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
 		if (result[rawStorageKey] === undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
 			return this.defaultValue as Return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Assumes the user never uses the Storage API directly for this key
-		return result[rawStorageKey];
-	};
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
+		return result[rawStorageKey] as Return;
+	}
 
-	set = async (secondaryKey: string, value: Exclude<Return, undefined>): Promise<void> => {
+	async set(secondaryKey: string, value: Exclude<Return, undefined>): Promise<void> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
 		if (value === undefined) {
-			await chromeP.storage[this.areaName].remove(rawStorageKey);
+			await this.#storage.remove(rawStorageKey);
 		} else {
-			await chromeP.storage[this.areaName].set({[rawStorageKey]: value});
+			await this.#storage.set({[rawStorageKey]: value});
 		}
-	};
+	}
 
-	remove = async (secondaryKey: string): Promise<void> => {
+	async remove(secondaryKey: string): Promise<void> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		await chromeP.storage[this.areaName].remove(rawStorageKey);
-	};
+		await this.#storage.remove(rawStorageKey);
+	}
 
 	/** @deprecated Only here to match the Map API; use `remove` instead */
-	// eslint-disable-next-line @typescript-eslint/member-ordering -- invalid
-	delete = this.remove;
+	async delete(secondaryKey: string): Promise<void> {
+		return this.remove(secondaryKey);
+	}
 
 	async * entries(): AsyncIterableIterator<[string, Exclude<Return, undefined>]> {
-		const allItems = await chromeP.storage[this.areaName].get();
+		const allItems = await this.#storage.get();
 
 		for (const rawKey of Object.keys(allItems)) {
 			const secondaryKey = this.getSecondaryStorageKey(rawKey);
@@ -81,13 +86,15 @@ export class StorageItemMap<
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/member-ordering -- Must be after entries() and bound in constructor
-	[Symbol.asyncIterator] = this.entries;
+	[Symbol.asyncIterator](): AsyncIterableIterator<[string, Exclude<Return, undefined>]> {
+		return this.entries();
+	}
 
 	onChanged(
 		callback: (key: string, value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
 	): void {
+		assertChromeStorageAvailable();
 		const changeHandler = (
 			changes: Record<string, chrome.storage.StorageChange>,
 			area: chrome.storage.AreaName,
@@ -98,9 +105,9 @@ export class StorageItemMap<
 
 			for (const rawKey of Object.keys(changes)) {
 				const secondaryKey = this.getSecondaryStorageKey(rawKey);
-				if (secondaryKey) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Assumes the user never uses the Storage API directly
-					callback(secondaryKey, changes[rawKey]!.newValue);
+				if (secondaryKey && hasStorageValueChanged(changes[rawKey]!)) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
+					callback(secondaryKey, changes[rawKey]!.newValue as Exclude<Return, undefined>);
 				}
 			}
 		};

@@ -1,179 +1,184 @@
 import {
-	test, beforeEach, assert, expect, vi,
+test, beforeEach, assert, expect, vi,
 } from 'vitest';
 import {StorageItemMap} from 'webext-storage';
 
 const testItem = new StorageItemMap('height');
 
 function createStorage(wholeCache, area = 'local') {
-	for (const [key, data] of Object.entries(wholeCache)) {
-		chrome.storage[area].get
-			.withArgs(key)
-			.yields({[key]: data});
-	}
+chrome.storage[area].get.mockImplementation(key => {
+if (key in wholeCache) {
+return Promise.resolve({[key]: wholeCache[key]});
+}
+
+return Promise.resolve({});
+});
 }
 
 beforeEach(() => {
-	chrome.flush();
-	chrome.storage.local.get.yields({});
-	chrome.storage.local.set.yields(undefined);
-	chrome.storage.local.remove.yields(undefined);
-	chrome.storage.sync.get.yields({});
+vi.resetAllMocks();
+chrome.storage.onChanged.clearListeners();
+chrome.storage.local.get.mockResolvedValue({});
+chrome.storage.local.set.mockResolvedValue(undefined);
+chrome.storage.local.remove.mockResolvedValue(undefined);
+chrome.storage.sync.get.mockResolvedValue({});
 });
 
 test('get() with empty storage', async () => {
-	assert.equal(await testItem.get('rico'), undefined);
+assert.equal(await testItem.get('rico'), undefined);
 });
 
 test('get() with storage', async () => {
-	createStorage({
-		'height:::rico': 220,
-	});
-	assert.equal(await testItem.get('rico'), 220);
-	assert.equal(await (0, testItem.get)('rico'), 220, 'get method should be bound');
+createStorage({
+'height:::rico': 220,
+});
+assert.equal(await testItem.get('rico'), 220);
 });
 
 test('get() with default', async () => {
-	const testItem = new StorageItemMap('sign', {defaultValue: 'unknown'});
-	assert.equal(await testItem.get('december'), 'unknown');
-	createStorage({
-		'sign:::december': 'sagittarius',
-	});
-	assert.equal(await testItem.get('december'), 'sagittarius');
+const testItem = new StorageItemMap('sign', {defaultValue: 'unknown'});
+assert.equal(await testItem.get('december'), 'unknown');
+createStorage({
+'sign:::december': 'sagittarius',
+});
+assert.equal(await testItem.get('december'), 'sagittarius');
 });
 
-test('get() with `sync` storage', async () => {
-	const sync = new StorageItemMap('brands', {area: 'sync'});
-	await sync.get('MacBook');
+test('get() with \`sync\` storage', async () => {
+const sync = new StorageItemMap('brands', {area: 'sync'});
+await sync.get('MacBook');
 
-	assert.equal(chrome.storage.local.get.lastCall, undefined);
+assert.equal(chrome.storage.local.get.mock.lastCall, undefined);
 
-	const [argument] = chrome.storage.sync.get.lastCall.args;
-	assert.deepEqual(argument, 'brands:::MacBook');
+const [argument] = chrome.storage.sync.get.mock.lastCall;
+assert.deepEqual(argument, 'brands:::MacBook');
 });
 
 test('set(x, undefined) will unset the value', async () => {
-	createStorage({
-		'height:::rico': 220,
-	});
-	assert.equal(await testItem.set('rico'), undefined);
-	assert.equal(chrome.storage.local.set.lastCall, undefined);
-	const [argument] = chrome.storage.local.remove.lastCall.args;
-	assert.deepEqual(argument, 'height:::rico');
+createStorage({
+'height:::rico': 220,
+});
+assert.equal(await testItem.set('rico'), undefined);
+assert.equal(chrome.storage.local.set.mock.lastCall, undefined);
+const [argument] = chrome.storage.local.remove.mock.lastCall;
+assert.deepEqual(argument, 'height:::rico');
 });
 
 test('set() with value', async () => {
-	await testItem.set('rico', 250);
-	const [argument1] = chrome.storage.local.set.lastCall.args;
-	assert.deepEqual(Object.keys(argument1), ['height:::rico']);
-	assert.equal(argument1['height:::rico'], 250);
-
-	await (0, testItem.set)('luigi', 120);
-	const [argument2] = chrome.storage.local.set.lastCall.args;
-	assert.equal(argument2['height:::luigi'], 120, 'get method should be bound');
+await testItem.set('rico', 250);
+const [argument1] = chrome.storage.local.set.mock.lastCall;
+assert.deepEqual(Object.keys(argument1), ['height:::rico']);
+assert.equal(argument1['height:::rico'], 250);
 });
 
 test('remove()', async () => {
-	await testItem.remove('mario');
-	const [argument] = chrome.storage.local.remove.lastCall.args;
-	assert.equal(argument, 'height:::mario');
+await testItem.remove('mario');
+const [argument] = chrome.storage.local.remove.mock.lastCall;
+assert.equal(argument, 'height:::mario');
 });
 
 test('has() returns false', async () => {
-	assert.equal(await testItem.has('rico'), false);
+assert.equal(await testItem.has('rico'), false);
 });
 
 test('has() returns true', async () => {
-	createStorage({
-		'height:::rico': 220,
-	});
-	assert.equal(await testItem.has('rico'), true);
-	assert.equal(await (0, testItem.has)('rico'), true, 'get method should be bound');
+createStorage({
+'height:::rico': 220,
+});
+assert.equal(await testItem.has('rico'), true);
 });
 
 test('onChanged() is called for the correct item', async () => {
-	const name = new StorageItemMap('distance');
-	const spy = vi.fn();
-	name.onChanged(spy);
-	chrome.storage.onChanged.trigger({unrelatedKey: 123}, 'local');
-	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.trigger({'distance:::jupiter': 10e10}, 'sync');
-	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.trigger({'distance:::jupiter': 10e10}, 'local');
-	expect(spy).toHaveBeenCalled();
+const name = new StorageItemMap('distance');
+const spy = vi.fn();
+name.onChanged(spy);
+chrome.storage.onChanged.callListeners({unrelatedKey: 123}, 'local');
+expect(spy).not.toHaveBeenCalled();
+chrome.storage.onChanged.callListeners({'distance:::jupiter': 10e10}, 'sync');
+expect(spy).not.toHaveBeenCalled();
+chrome.storage.onChanged.callListeners({'distance:::jupiter': 10e10}, 'local');
+expect(spy).toHaveBeenCalled();
+});
+
+test('onChanged() is not called on Firefox when value is unchanged', async () => {
+vi.stubGlobal('navigator', {userAgent: 'Mozilla/5.0 Firefox/120.0'});
+try {
+const name = new StorageItemMap('distance');
+const spy = vi.fn();
+name.onChanged(spy);
+chrome.storage.onChanged.callListeners({'distance:::jupiter': {newValue: 10e10, oldValue: 10e10}}, 'local');
+expect(spy).not.toHaveBeenCalled();
+chrome.storage.onChanged.callListeners({'distance:::jupiter': {newValue: 20e10, oldValue: 10e10}}, 'local');
+expect(spy).toHaveBeenCalledOnce();
+} finally {
+vi.unstubAllGlobals();
+}
+});
+
+test('throws when chrome.storage is not available', async () => {
+const originalChrome = globalThis.chrome;
+try {
+globalThis.chrome = undefined;
+const expectedError = /\`chrome\.storage\` is not available/;
+await expect(testItem.get('rico')).rejects.toThrow(expectedError);
+await expect(testItem.set('rico', 250)).rejects.toThrow(expectedError);
+await expect(testItem.has('rico')).rejects.toThrow(expectedError);
+await expect(testItem.remove('rico')).rejects.toThrow(expectedError);
+expect(() => testItem.onChanged(() => {})).toThrow(expectedError);
+} finally {
+globalThis.chrome = originalChrome;
+}
 });
 
 test('entries() with empty storage', async () => {
-	const items = new StorageItemMap('fruits');
-	const entries = [];
-	for await (const entry of items.entries()) {
-		entries.push(entry);
-	}
+const items = new StorageItemMap('fruits');
+const entries = [];
+for await (const entry of items.entries()) {
+entries.push(entry);
+}
 
-	assert.deepEqual(entries, []);
+assert.deepEqual(entries, []);
 });
 
 test('entries() with storage items', async () => {
-	const items = new StorageItemMap('fruits');
-	const wholeCache = {
-		'fruits:::apple': 'red',
-		'fruits:::banana': 'yellow',
-		'other:::orange': 'orange',
-	};
-	createStorage(wholeCache);
-	// Mock get() without arguments to return all items
-	chrome.storage.local.get.withArgs().yields(wholeCache);
-	chrome.storage.local.get.withArgs(undefined).yields(wholeCache);
+const items = new StorageItemMap('fruits');
+const wholeCache = {
+'fruits:::apple': 'red',
+'fruits:::banana': 'yellow',
+'other:::orange': 'orange',
+};
+// Mock get() to return all items when called without arguments
+chrome.storage.local.get.mockResolvedValue(wholeCache);
 
-	const entries = [];
-	for await (const entry of items.entries()) {
-		entries.push(entry);
-	}
+const entries = [];
+for await (const entry of items.entries()) {
+entries.push(entry);
+}
 
-	assert.equal(entries.length, 2);
-	assert.deepEqual(entries, [
-		['apple', 'red'],
-		['banana', 'yellow'],
-	]);
+assert.equal(entries.length, 2);
+assert.deepEqual(entries, [
+['apple', 'red'],
+['banana', 'yellow'],
+]);
 });
 
 test('async iteration using for-await-of', async () => {
-	const items = new StorageItemMap('colors');
-	const wholeCache = {
-		'colors:::red': '#FF0000',
-		'colors:::green': '#00FF00',
-		'colors:::blue': '#0000FF',
-	};
-	createStorage(wholeCache);
-	// Mock get() without arguments to return all items
-	chrome.storage.local.get.withArgs().yields(wholeCache);
-	chrome.storage.local.get.withArgs(undefined).yields(wholeCache);
+const items = new StorageItemMap('colors');
+const wholeCache = {
+'colors:::red': '#FF0000',
+'colors:::green': '#00FF00',
+'colors:::blue': '#0000FF',
+};
+// Mock get() to return all items when called without arguments
+chrome.storage.local.get.mockResolvedValue(wholeCache);
 
-	const collected = [];
-	for await (const [key, value] of items) {
-		collected.push([key, value]);
-	}
+const collected = [];
+for await (const [key, value] of items) {
+collected.push([key, value]);
+}
 
-	assert.equal(collected.length, 3);
-	expect(collected).toContainEqual(['red', '#FF0000']);
-	expect(collected).toContainEqual(['green', '#00FF00']);
-	expect(collected).toContainEqual(['blue', '#0000FF']);
-});
-
-test('entries() method should be bound', async () => {
-	const items = new StorageItemMap('test');
-	const wholeCache = {'test:::key': 'value'};
-	createStorage(wholeCache);
-	chrome.storage.local.get.withArgs().yields(wholeCache);
-	chrome.storage.local.get.withArgs(undefined).yields(wholeCache);
-
-	// Test that method binding works when extracted (like other methods in this class)
-	const {entries} = items;
-	const result = [];
-	for await (const entry of entries()) {
-		result.push(entry);
-	}
-
-	assert.equal(result.length, 1);
-	assert.deepEqual(result[0], ['key', 'value']);
+assert.equal(collected.length, 3);
+expect(collected).toContainEqual(['red', '#FF0000']);
+expect(collected).toContainEqual(['green', '#00FF00']);
+expect(collected).toContainEqual(['blue', '#0000FF']);
 });

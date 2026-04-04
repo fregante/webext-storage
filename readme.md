@@ -60,7 +60,7 @@ The package exports two classes:
 Support:
 
 - Browsers: Chrome, Firefox, and Safari
-- Manifest: v2 and v3
+- Manifest: v3
 - Permissions: `storage` or `unlimitedStorage`
 - Context: They can be called from any context
 

@@ -1,9 +1,9 @@
 import {
 	test, beforeEach, assert, expect, vi,
 } from 'vitest';
-import {StorageItem} from 'webext-storage';
+import {StorageItemMap} from 'webext-storage';
 
-const testItem = new StorageItem('name');
+const testItem = new StorageItemMap('height');
 
 function createStorage(wholeCache, area = 'local') {
 	chrome.storage[area].get.mockImplementation(key => {
@@ -25,91 +25,90 @@ beforeEach(() => {
 });
 
 test('get() with empty storage', async () => {
-	assert.equal(await testItem.get(), undefined);
+	assert.equal(await testItem.get('rico'), undefined);
 });
 
 test('get() with storage', async () => {
 	createStorage({
-		name: 'Rico',
+		'height:::rico': 220,
 	});
-	assert.equal(await testItem.get(), 'Rico');
+	assert.equal(await testItem.get('rico'), 220);
 });
 
 test('get() with default', async () => {
-	const testItem = new StorageItem('name', {defaultValue: 'Anne'});
-	assert.equal(await testItem.get(), 'Anne');
+	const testItem = new StorageItemMap('sign', {defaultValue: 'unknown'});
+	assert.equal(await testItem.get('december'), 'unknown');
 	createStorage({
-		name: 'Rico',
+		'sign:::december': 'sagittarius',
 	});
-	assert.equal(await testItem.get(), 'Rico');
+	assert.equal(await testItem.get('december'), 'sagittarius');
 });
 
 test('get() with `sync` storage', async () => {
-	const sync = new StorageItem('name', {area: 'sync'});
-	await sync.get();
+	const sync = new StorageItemMap('brands', {area: 'sync'});
+	await sync.get('MacBook');
 
 	assert.equal(chrome.storage.local.get.mock.lastCall, undefined);
 
 	const [argument] = chrome.storage.sync.get.mock.lastCall;
-	assert.deepEqual(argument, 'name');
+	assert.deepEqual(argument, 'brands:::MacBook');
 });
 
-test('set(undefined) will unset the value', async () => {
+test('set(x, undefined) will unset the value', async () => {
 	createStorage({
-		name: 'Rico',
+		'height:::rico': 220,
 	});
-	assert.equal(await testItem.set(), undefined);
+	assert.equal(await testItem.set('rico'), undefined);
 	assert.equal(chrome.storage.local.set.mock.lastCall, undefined);
 	const [argument] = chrome.storage.local.remove.mock.lastCall;
-	assert.deepEqual(argument, 'name');
+	assert.deepEqual(argument, 'height:::rico');
 });
 
 test('set() with value', async () => {
-	await testItem.set('Anne');
+	await testItem.set('rico', 250);
 	const [argument1] = chrome.storage.local.set.mock.lastCall;
-	assert.deepEqual(Object.keys(argument1), ['name']);
-	assert.equal(argument1.name, 'Anne');
+	assert.deepEqual(Object.keys(argument1), ['height:::rico']);
+	assert.equal(argument1['height:::rico'], 250);
 });
 
 test('remove()', async () => {
-	await testItem.remove();
+	await testItem.remove('mario');
 	const [argument] = chrome.storage.local.remove.mock.lastCall;
-	assert.equal(argument, 'name');
+	assert.equal(argument, 'height:::mario');
 });
 
 test('has() returns false', async () => {
-	createStorage({});
-	assert.equal(await testItem.has(), false);
+	assert.equal(await testItem.has('rico'), false);
 });
 
 test('has() returns true', async () => {
 	createStorage({
-		name: 'Rico',
+		'height:::rico': 220,
 	});
-	assert.equal(await testItem.has(), true);
+	assert.equal(await testItem.has('rico'), true);
 });
 
 test('onChanged() is called for the correct item', async () => {
-	const name = new StorageItem('name');
+	const name = new StorageItemMap('distance');
 	const spy = vi.fn();
 	name.onChanged(spy);
 	chrome.storage.onChanged.callListeners({unrelatedKey: 123}, 'local');
 	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.callListeners({name: 'Anne'}, 'sync');
+	chrome.storage.onChanged.callListeners({'distance:::jupiter': 10e10}, 'sync');
 	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.callListeners({name: 'Anne'}, 'local');
+	chrome.storage.onChanged.callListeners({'distance:::jupiter': 10e10}, 'local');
 	expect(spy).toHaveBeenCalled();
 });
 
 test('onChanged() is not called on Firefox when value is unchanged', async () => {
 	vi.stubGlobal('navigator', {userAgent: 'Mozilla/5.0 Firefox/120.0'});
 	try {
-		const name = new StorageItem('name');
+		const name = new StorageItemMap('distance');
 		const spy = vi.fn();
 		name.onChanged(spy);
-		chrome.storage.onChanged.callListeners({name: {newValue: 'Anne', oldValue: 'Anne'}}, 'local');
+		chrome.storage.onChanged.callListeners({'distance:::jupiter': {newValue: 10e10, oldValue: 10e10}}, 'local');
 		expect(spy).not.toHaveBeenCalled();
-		chrome.storage.onChanged.callListeners({name: {newValue: 'Bob', oldValue: 'Anne'}}, 'local');
+		chrome.storage.onChanged.callListeners({'distance:::jupiter': {newValue: 20e10, oldValue: 10e10}}, 'local');
 		expect(spy).toHaveBeenCalledOnce();
 	} finally {
 		vi.unstubAllGlobals();
@@ -121,10 +120,10 @@ test('throws when chrome.storage is not available', async () => {
 	try {
 		globalThis.chrome = undefined;
 		const expectedError = /`chrome\.storage` is not available/;
-		await expect(testItem.get()).rejects.toThrow(expectedError);
-		await expect(testItem.set('value')).rejects.toThrow(expectedError);
-		await expect(testItem.has()).rejects.toThrow(expectedError);
-		await expect(testItem.remove()).rejects.toThrow(expectedError);
+		await expect(testItem.get('rico')).rejects.toThrow(expectedError);
+		await expect(testItem.set('rico', 250)).rejects.toThrow(expectedError);
+		await expect(testItem.has('rico')).rejects.toThrow(expectedError);
+		await expect(testItem.remove('rico')).rejects.toThrow(expectedError);
 		expect(() => testItem.onChanged(() => {})).toThrow(expectedError);
 	} finally {
 		globalThis.chrome = originalChrome;
