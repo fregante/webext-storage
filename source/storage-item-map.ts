@@ -99,18 +99,13 @@ export class StorageItemMap<
 	 * @returns An async iterator of [key, value] pairs.
 	 */
 	async * entries(): AsyncIterableIterator<[string, Exclude<Return, undefined>]> {
-		const rawKeys = await this.#getRawKeys();
+		const secondaryKeys = await this.keys();
 
-		for (const rawKey of rawKeys) {
-			const secondaryKey = rawKey.slice(this.prefix.length);
+		for (const secondaryKey of secondaryKeys) {
 			// eslint-disable-next-line no-await-in-loop -- Intentionally fetching one value at a time to avoid loading all storage at once
 			const value = await this.get(secondaryKey);
-			// The value from get() might be undefined if defaultValue is undefined
-			// But for entries(), we only yield actual stored values
-			if (value !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We filter out undefined values above
-				yield [secondaryKey, value as Exclude<Return, undefined>];
-			}
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Key exists in storage, get() will return the stored value
+			yield [secondaryKey, value as Exclude<Return, undefined>];
 		}
 	}
 
