@@ -79,8 +79,8 @@ export class StorageItemMap<
 		for (const rawKey of Object.keys(allItems)) {
 			const secondaryKey = this.getSecondaryStorageKey(rawKey);
 			if (secondaryKey) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Assumes the user never uses the Storage API directly for this key
-				const value = allItems[rawKey];
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
+				const value = allItems[rawKey] as Exclude<Return, undefined>;
 				yield [secondaryKey, value];
 			}
 		}
