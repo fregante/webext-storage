@@ -74,10 +74,15 @@ export class StorageItemMap<
 	}
 
 	async keys(): Promise<string[]> {
-		const allKeys = await this.#storage.getKeys();
-		return allKeys
-			.filter(key => key.startsWith(this.prefix))
-			.map(key => key.slice(this.prefix.length));
+		const rawKeys = await this.#getRawKeys();
+		return rawKeys.map(key => key.slice(this.prefix.length));
+	}
+
+	async clear(): Promise<void> {
+		const rawKeys = await this.#getRawKeys();
+		if (rawKeys.length > 0) {
+			await this.#storage.remove(rawKeys);
+		}
 	}
 
 	onChanged(
@@ -116,5 +121,10 @@ export class StorageItemMap<
 
 	private getSecondaryStorageKey(rawKey: string): string | false {
 		return rawKey.startsWith(this.prefix) && rawKey.slice(this.prefix.length);
+	}
+
+	async #getRawKeys(): Promise<string[]> {
+		const allKeys = await this.#storage.getKeys();
+		return allKeys.filter(key => key.startsWith(this.prefix));
 	}
 }

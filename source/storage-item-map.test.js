@@ -111,6 +111,22 @@ test('keys() uses the correct storage area', async () => {
 	assert.equal(chrome.storage.local.getKeys.mock.lastCall, undefined);
 });
 
+test('clear() removes all items with the prefix', async () => {
+	chrome.storage.local.getKeys.mockResolvedValue([
+		'height:::rico',
+		'height:::mario',
+		'unrelated:::key',
+	]);
+	await testItem.clear();
+	const [argument] = chrome.storage.local.remove.mock.lastCall;
+	assert.deepEqual(argument, ['height:::rico', 'height:::mario']);
+});
+
+test('clear() does nothing with empty storage', async () => {
+	await testItem.clear();
+	assert.equal(chrome.storage.local.remove.mock.lastCall, undefined);
+});
+
 test('onChanged() is called for the correct item', async () => {
 	const name = new StorageItemMap('distance');
 	const spy = vi.fn();
@@ -148,6 +164,7 @@ test('throws when chrome.storage is not available', async () => {
 		await expect(testItem.has('rico')).rejects.toThrow(expectedError);
 		await expect(testItem.remove('rico')).rejects.toThrow(expectedError);
 		await expect(testItem.keys()).rejects.toThrow(expectedError);
+		await expect(testItem.clear()).rejects.toThrow(expectedError);
 		expect(() => testItem.onChanged(() => {})).toThrow(expectedError);
 	} finally {
 		globalThis.chrome = originalChrome;
