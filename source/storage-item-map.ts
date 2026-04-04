@@ -80,6 +80,13 @@ export class StorageItemMap<
 			.map(key => key.slice(this.prefix.length));
 	}
 
+	async clear(): Promise<void> {
+		const keys = await this.keys();
+		if (keys.length > 0) {
+			await this.#storage.remove(keys.map(key => this.getRawStorageKey(key)));
+		}
+	}
+
 	onChanged(
 		callback: (key: string, value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
