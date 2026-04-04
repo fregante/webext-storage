@@ -1,29 +1,52 @@
 import {
 	test, beforeEach, assert, expect, vi,
 } from 'vitest';
-import {StorageItemMap} from 'webext-storage';
+import {StorageItemMap} from './storage-item-map.js';
+
+type MockFunctions = {
+	mock: {lastCall?: unknown[]};
+	mockResolvedValue(value: unknown): void;
+	mockImplementation(fn: (...args: unknown[]) => unknown): void;
+};
+
+type OnChangedEvent = {
+	clearListeners(): void;
+	callListeners(changes: Record<string, unknown>, area: string): void;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Access jest-chrome mock methods
+const asMock = (fn: unknown): MockFunctions => fn as MockFunctions;
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Access jest-chrome event methods
+const storageOnChanged = chrome.storage.onChanged as unknown as OnChangedEvent;
 
 const testItem = new StorageItemMap('height');
 
-function createStorage(wholeCache, area = 'local') {
-	chrome.storage[area].get.mockImplementation(key => {
-		if (key in wholeCache) {
-			return Promise.resolve({[key]: wholeCache[key]});
+let localGetKeys: ReturnType<typeof vi.fn<() => Promise<string[]>>>;
+let syncGetKeys: ReturnType<typeof vi.fn<() => Promise<string[]>>>;
+
+function createStorage(wholeCache: Record<string, unknown>, area: chrome.storage.AreaName = 'local') {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Narrowing to areas that have jest-chrome mocks
+	asMock(chrome.storage[area as 'local' | 'sync'].get).mockImplementation(async (key: unknown) => {
+		if (typeof key === 'string' && key in wholeCache) {
+			return {[key]: wholeCache[key]};
 		}
 
-		return Promise.resolve({});
+		return {};
 	});
 }
 
 beforeEach(() => {
 	vi.resetAllMocks();
-	chrome.storage.onChanged.clearListeners();
-	chrome.storage.local.get.mockResolvedValue({});
-	chrome.storage.local.set.mockResolvedValue(undefined);
-	chrome.storage.local.remove.mockResolvedValue(undefined);
-	chrome.storage.local.getKeys = vi.fn().mockResolvedValue([]);
-	chrome.storage.sync.get.mockResolvedValue({});
-	chrome.storage.sync.getKeys = vi.fn().mockResolvedValue([]);
+	storageOnChanged.clearListeners();
+	asMock(chrome.storage.local.get).mockResolvedValue({});
+	asMock(chrome.storage.local.set).mockResolvedValue(undefined);
+	asMock(chrome.storage.local.remove).mockResolvedValue(undefined);
+	localGetKeys = vi.fn<() => Promise<string[]>>().mockResolvedValue([]);
+	Object.assign(chrome.storage.local, {getKeys: localGetKeys});
+	asMock(chrome.storage.sync.get).mockResolvedValue({});
+	syncGetKeys = vi.fn<() => Promise<string[]>>().mockResolvedValue([]);
+	Object.assign(chrome.storage.sync, {getKeys: syncGetKeys});
 });
 
 test('get() with empty storage', async () => {
@@ -50,9 +73,9 @@ test('get() with `sync` storage', async () => {
 	const sync = new StorageItemMap('brands', {area: 'sync'});
 	await sync.get('MacBook');
 
-	assert.equal(chrome.storage.local.get.mock.lastCall, undefined);
+	assert.equal(asMock(chrome.storage.local.get).mock.lastCall, undefined);
 
-	const [argument] = chrome.storage.sync.get.mock.lastCall;
+	const [argument] = asMock(chrome.storage.sync.get).mock.lastCall!;
 	assert.deepEqual(argument, 'brands:::MacBook');
 });
 
@@ -60,22 +83,22 @@ test('set(x, undefined) will unset the value', async () => {
 	createStorage({
 		'height:::rico': 220,
 	});
-	assert.equal(await testItem.set('rico'), undefined);
-	assert.equal(chrome.storage.local.set.mock.lastCall, undefined);
-	const [argument] = chrome.storage.local.remove.mock.lastCall;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Testing undefined behavior to verify unset path
+	await testItem.set('rico', undefined as unknown);
+	assert.equal(asMock(chrome.storage.local.set).mock.lastCall, undefined);
+	const [argument] = asMock(chrome.storage.local.remove).mock.lastCall!;
 	assert.deepEqual(argument, 'height:::rico');
 });
 
 test('set() with value', async () => {
 	await testItem.set('rico', 250);
-	const [argument1] = chrome.storage.local.set.mock.lastCall;
-	assert.deepEqual(Object.keys(argument1), ['height:::rico']);
-	assert.equal(argument1['height:::rico'], 250);
+	const [argument1] = asMock(chrome.storage.local.set).mock.lastCall!;
+	expect(argument1).toEqual({'height:::rico': 250});
 });
 
 test('remove()', async () => {
 	await testItem.remove('mario');
-	const [argument] = chrome.storage.local.remove.mock.lastCall;
+	const [argument] = asMock(chrome.storage.local.remove).mock.lastCall!;
 	assert.equal(argument, 'height:::mario');
 });
 
@@ -95,7 +118,7 @@ test('keys() with empty storage', async () => {
 });
 
 test('keys() returns only matching secondary keys', async () => {
-	chrome.storage.local.getKeys.mockResolvedValue([
+	localGetKeys.mockResolvedValue([
 		'height:::rico',
 		'height:::mario',
 		'unrelated:::key',
@@ -105,37 +128,37 @@ test('keys() returns only matching secondary keys', async () => {
 
 test('keys() uses the correct storage area', async () => {
 	const sync = new StorageItemMap('brands', {area: 'sync'});
-	chrome.storage.sync.getKeys.mockResolvedValue(['brands:::MacBook', 'brands:::Dell']);
+	syncGetKeys.mockResolvedValue(['brands:::MacBook', 'brands:::Dell']);
 	const keys = await sync.keys();
 	assert.deepEqual(keys, ['MacBook', 'Dell']);
-	assert.equal(chrome.storage.local.getKeys.mock.lastCall, undefined);
+	assert.equal(localGetKeys.mock.lastCall, undefined);
 });
 
 test('clear() removes all items with the prefix', async () => {
-	chrome.storage.local.getKeys.mockResolvedValue([
+	localGetKeys.mockResolvedValue([
 		'height:::rico',
 		'height:::mario',
 		'unrelated:::key',
 	]);
 	await testItem.clear();
-	const [argument] = chrome.storage.local.remove.mock.lastCall;
+	const [argument] = asMock(chrome.storage.local.remove).mock.lastCall!;
 	assert.deepEqual(argument, ['height:::rico', 'height:::mario']);
 });
 
 test('clear() does nothing with empty storage', async () => {
 	await testItem.clear();
-	assert.equal(chrome.storage.local.remove.mock.lastCall, undefined);
+	assert.equal(asMock(chrome.storage.local.remove).mock.lastCall, undefined);
 });
 
 test('onChanged() is called for the correct item', async () => {
 	const name = new StorageItemMap('distance');
-	const spy = vi.fn();
+	const spy = vi.fn<() => void>();
 	name.onChanged(spy);
-	chrome.storage.onChanged.callListeners({unrelatedKey: 123}, 'local');
+	storageOnChanged.callListeners({unrelatedKey: 123}, 'local');
 	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.callListeners({'distance:::jupiter': 10e10}, 'sync');
+	storageOnChanged.callListeners({'distance:::jupiter': 10e10}, 'sync');
 	expect(spy).not.toHaveBeenCalled();
-	chrome.storage.onChanged.callListeners({'distance:::jupiter': 10e10}, 'local');
+	storageOnChanged.callListeners({'distance:::jupiter': 10e10}, 'local');
 	expect(spy).toHaveBeenCalled();
 });
 
@@ -143,11 +166,11 @@ test('onChanged() is not called on Firefox when value is unchanged', async () =>
 	vi.stubGlobal('navigator', {userAgent: 'Mozilla/5.0 Firefox/120.0'});
 	try {
 		const name = new StorageItemMap('distance');
-		const spy = vi.fn();
+		const spy = vi.fn<() => void>();
 		name.onChanged(spy);
-		chrome.storage.onChanged.callListeners({'distance:::jupiter': {newValue: 10e10, oldValue: 10e10}}, 'local');
+		storageOnChanged.callListeners({'distance:::jupiter': {newValue: 10e10, oldValue: 10e10}}, 'local');
 		expect(spy).not.toHaveBeenCalled();
-		chrome.storage.onChanged.callListeners({'distance:::jupiter': {newValue: 20e10, oldValue: 10e10}}, 'local');
+		storageOnChanged.callListeners({'distance:::jupiter': {newValue: 20e10, oldValue: 10e10}}, 'local');
 		expect(spy).toHaveBeenCalledOnce();
 	} finally {
 		vi.unstubAllGlobals();
@@ -155,25 +178,29 @@ test('onChanged() is not called on Firefox when value is unchanged', async () =>
 });
 
 test('throws when chrome.storage is not available', async () => {
-	const originalChrome = globalThis.chrome;
+	vi.stubGlobal('chrome', undefined);
 	try {
-		globalThis.chrome = undefined;
-		const expectedError = /`chrome\.storage` is not available/;
+		const expectedError = /`chrome\.storage` is not available/v;
 		await expect(testItem.get('rico')).rejects.toThrow(expectedError);
-		await expect(testItem.set('rico', 250)).rejects.toThrow(expectedError);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Testing undefined behavior to verify unset path
+		await expect(testItem.set('rico', undefined as unknown)).rejects.toThrow(expectedError);
 		await expect(testItem.has('rico')).rejects.toThrow(expectedError);
 		await expect(testItem.remove('rico')).rejects.toThrow(expectedError);
 		await expect(testItem.keys()).rejects.toThrow(expectedError);
 		await expect(testItem.clear()).rejects.toThrow(expectedError);
-		expect(() => testItem.onChanged(() => {})).toThrow(expectedError);
+		expect(() => {
+			testItem.onChanged(() => {
+			// Intentionally empty
+			});
+		}).toThrow(expectedError);
 	} finally {
-		globalThis.chrome = originalChrome;
+		vi.unstubAllGlobals();
 	}
 });
 
 test('entries() with empty storage', async () => {
 	const items = new StorageItemMap('fruits');
-	const entries = [];
+	const entries: unknown[] = [];
 	for await (const entry of items.entries()) {
 		entries.push(entry);
 	}
@@ -183,7 +210,7 @@ test('entries() with empty storage', async () => {
 
 test('entries() with storage items', async () => {
 	const items = new StorageItemMap('fruits');
-	chrome.storage.local.getKeys.mockResolvedValue([
+	localGetKeys.mockResolvedValue([
 		'fruits:::apple',
 		'fruits:::banana',
 		'other:::orange',
@@ -194,7 +221,7 @@ test('entries() with storage items', async () => {
 		'other:::orange': 'orange',
 	});
 
-	const entries = [];
+	const entries: unknown[] = [];
 	for await (const entry of items.entries()) {
 		entries.push(entry);
 	}
@@ -206,7 +233,7 @@ test('entries() with storage items', async () => {
 
 test('async iteration using for-await-of', async () => {
 	const items = new StorageItemMap('colors');
-	chrome.storage.local.getKeys.mockResolvedValue([
+	localGetKeys.mockResolvedValue([
 		'colors:::red',
 		'colors:::green',
 		'colors:::blue',
@@ -217,7 +244,7 @@ test('async iteration using for-await-of', async () => {
 		'colors:::blue': '#0000FF',
 	});
 
-	const collected = [];
+	const collected: unknown[] = [];
 	for await (const [key, value] of items) {
 		collected.push([key, value]);
 	}
