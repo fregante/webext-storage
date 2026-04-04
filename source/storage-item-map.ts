@@ -73,15 +73,28 @@ export class StorageItemMap<
 		return this.remove(secondaryKey);
 	}
 
-	async * entries(): AsyncIterableIterator<[string, Exclude<Return, undefined>]> {
-		const allItems = await this.#storage.get();
+	async keys(): Promise<string[]> {
+		const rawKeys = await this.#getRawKeys();
+		return rawKeys.map(key => key.slice(this.prefix.length));
+	}
 
-		for (const rawKey of Object.keys(allItems)) {
-			const secondaryKey = this.getSecondaryStorageKey(rawKey);
-			if (secondaryKey) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
-				const value = allItems[rawKey] as Exclude<Return, undefined>;
-				yield [secondaryKey, value];
+	async clear(): Promise<void> {
+		const rawKeys = await this.#getRawKeys();
+		if (rawKeys.length > 0) {
+			await this.#storage.remove(rawKeys);
+		}
+	}
+
+	async * entries(): AsyncIterableIterator<[string, Exclude<Return, undefined>]> {
+		const rawKeys = await this.#getRawKeys();
+
+		for (const rawKey of rawKeys) {
+			const secondaryKey = rawKey.slice(this.prefix.length);
+			const value = await this.get(secondaryKey);
+			// The value from get() might be undefined if defaultValue is undefined
+			// But for entries(), we only yield actual stored values
+			if (value !== undefined) {
+				yield [secondaryKey, value as Exclude<Return, undefined>];
 			}
 		}
 	}
@@ -126,5 +139,10 @@ export class StorageItemMap<
 
 	private getSecondaryStorageKey(rawKey: string): string | false {
 		return rawKey.startsWith(this.prefix) && rawKey.slice(this.prefix.length);
+	}
+
+	async #getRawKeys(): Promise<string[]> {
+		const allKeys = await this.#storage.getKeys();
+		return allKeys.filter(key => key.startsWith(this.prefix));
 	}
 }
