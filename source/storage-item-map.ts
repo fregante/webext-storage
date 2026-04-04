@@ -73,6 +73,13 @@ export class StorageItemMap<
 		return this.remove(secondaryKey);
 	}
 
+	async keys(): Promise<string[]> {
+		const allKeys = await this.#storage.getKeys();
+		return allKeys
+			.filter(key => key.startsWith(this.prefix))
+			.map(key => key.slice(this.prefix.length));
+	}
+
 	onChanged(
 		callback: (key: string, value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
