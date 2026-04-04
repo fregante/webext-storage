@@ -21,7 +21,9 @@ beforeEach(() => {
 	chrome.storage.local.get.mockResolvedValue({});
 	chrome.storage.local.set.mockResolvedValue(undefined);
 	chrome.storage.local.remove.mockResolvedValue(undefined);
+	chrome.storage.local.getKeys = vi.fn().mockResolvedValue([]);
 	chrome.storage.sync.get.mockResolvedValue({});
+	chrome.storage.sync.getKeys = vi.fn().mockResolvedValue([]);
 });
 
 test('get() with empty storage', async () => {
@@ -88,6 +90,27 @@ test('has() returns true', async () => {
 	assert.equal(await testItem.has('rico'), true);
 });
 
+test('keys() with empty storage', async () => {
+	assert.deepEqual(await testItem.keys(), []);
+});
+
+test('keys() returns only matching secondary keys', async () => {
+	chrome.storage.local.getKeys.mockResolvedValue([
+		'height:::rico',
+		'height:::mario',
+		'unrelated:::key',
+	]);
+	assert.deepEqual(await testItem.keys(), ['rico', 'mario']);
+});
+
+test('keys() uses the correct storage area', async () => {
+	const sync = new StorageItemMap('brands', {area: 'sync'});
+	chrome.storage.sync.getKeys.mockResolvedValue(['brands:::MacBook', 'brands:::Dell']);
+	const keys = await sync.keys();
+	assert.deepEqual(keys, ['MacBook', 'Dell']);
+	assert.equal(chrome.storage.local.getKeys.mock.lastCall, undefined);
+});
+
 test('onChanged() is called for the correct item', async () => {
 	const name = new StorageItemMap('distance');
 	const spy = vi.fn();
@@ -124,6 +147,7 @@ test('throws when chrome.storage is not available', async () => {
 		await expect(testItem.set('rico', 250)).rejects.toThrow(expectedError);
 		await expect(testItem.has('rico')).rejects.toThrow(expectedError);
 		await expect(testItem.remove('rico')).rejects.toThrow(expectedError);
+		await expect(testItem.keys()).rejects.toThrow(expectedError);
 		expect(() => testItem.onChanged(() => {})).toThrow(expectedError);
 	} finally {
 		globalThis.chrome = originalChrome;
