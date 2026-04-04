@@ -170,3 +170,60 @@ test('throws when chrome.storage is not available', async () => {
 		globalThis.chrome = originalChrome;
 	}
 });
+
+test('entries() with empty storage', async () => {
+	const items = new StorageItemMap('fruits');
+	const entries = [];
+	for await (const entry of items.entries()) {
+		entries.push(entry);
+	}
+
+	assert.deepEqual(entries, []);
+});
+
+test('entries() with storage items', async () => {
+	const items = new StorageItemMap('fruits');
+	chrome.storage.local.getKeys.mockResolvedValue([
+		'fruits:::apple',
+		'fruits:::banana',
+		'other:::orange',
+	]);
+	createStorage({
+		'fruits:::apple': 'red',
+		'fruits:::banana': 'yellow',
+		'other:::orange': 'orange',
+	});
+
+	const entries = [];
+	for await (const entry of items.entries()) {
+		entries.push(entry);
+	}
+
+	assert.equal(entries.length, 2);
+	expect(entries).toContainEqual(['apple', 'red']);
+	expect(entries).toContainEqual(['banana', 'yellow']);
+});
+
+test('async iteration using for-await-of', async () => {
+	const items = new StorageItemMap('colors');
+	chrome.storage.local.getKeys.mockResolvedValue([
+		'colors:::red',
+		'colors:::green',
+		'colors:::blue',
+	]);
+	createStorage({
+		'colors:::red': '#FF0000',
+		'colors:::green': '#00FF00',
+		'colors:::blue': '#0000FF',
+	});
+
+	const collected = [];
+	for await (const [key, value] of items) {
+		collected.push([key, value]);
+	}
+
+	assert.equal(collected.length, 3);
+	expect(collected).toContainEqual(['red', '#FF0000']);
+	expect(collected).toContainEqual(['green', '#00FF00']);
+	expect(collected).toContainEqual(['blue', '#0000FF']);
+});

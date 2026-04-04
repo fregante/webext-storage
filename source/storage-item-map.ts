@@ -49,7 +49,7 @@ export class StorageItemMap<
 			return this.defaultValue as Return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
 		return result[rawStorageKey] as Return;
 	}
 
@@ -85,6 +85,21 @@ export class StorageItemMap<
 		}
 	}
 
+	async * entries(): AsyncIterableIterator<[string, Exclude<Return, undefined>]> {
+		const secondaryKeys = await this.keys();
+
+		for (const secondaryKey of secondaryKeys) {
+			// eslint-disable-next-line no-await-in-loop -- Intentionally fetching one value at a time to avoid loading all storage at once
+			const value = await this.get(secondaryKey);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Key exists in storage, get() will return the stored value
+			yield [secondaryKey, value as Exclude<Return, undefined>];
+		}
+	}
+
+	[Symbol.asyncIterator](): AsyncIterableIterator<[string, Exclude<Return, undefined>]> {
+		return this.entries();
+	}
+
 	onChanged(
 		callback: (key: string, value: Exclude<Return, undefined>) => void,
 		signal?: AbortSignal,
@@ -101,7 +116,7 @@ export class StorageItemMap<
 			for (const rawKey of Object.keys(changes)) {
 				const secondaryKey = this.getSecondaryStorageKey(rawKey);
 				if (secondaryKey && hasStorageValueChanged(changes[rawKey]!)) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
 					callback(secondaryKey, changes[rawKey]!.newValue as Exclude<Return, undefined>);
 				}
 			}

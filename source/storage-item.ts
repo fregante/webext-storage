@@ -41,7 +41,7 @@ export class StorageItem<
 			return this.defaultValue as Return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
 		return result[this.key] as Return;
 	}
 
@@ -75,7 +75,7 @@ export class StorageItem<
 		) => {
 			const changedItem = changes[this.key];
 			if (area === this.area && changedItem && hasStorageValueChanged(changedItem)) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
 				callback(changedItem.newValue as Exclude<Return, undefined>);
 			}
 		};
