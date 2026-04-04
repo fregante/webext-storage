@@ -49,7 +49,7 @@ export class StorageItemMap<
 			return this.defaultValue as Return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
 		return result[rawStorageKey] as Return;
 	}
 
@@ -116,7 +116,7 @@ export class StorageItemMap<
 			for (const rawKey of Object.keys(changes)) {
 				const secondaryKey = this.getSecondaryStorageKey(rawKey);
 				if (secondaryKey && hasStorageValueChanged(changes[rawKey]!)) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
 					callback(secondaryKey, changes[rawKey]!.newValue as Exclude<Return, undefined>);
 				}
 			}
