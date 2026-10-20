@@ -1,4 +1,6 @@
-/** @type {import('xo').FlatXoConfig} */
+/**
+@type {import('xo').FlatXoConfig}
+*/
 export default [
 	{
 		languageOptions: {

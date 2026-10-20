@@ -6,20 +6,19 @@ export type StorageItemMapOptions<T> = {
 };
 
 export class StorageItemMap<
-	/** Only specify this if you don't have a default value */
+	/**
+	Only specify this if you don't have a default value
+	*/
 	Base,
 
-	/** The return type will be undefined unless you provide a default value */
+	/**
+	The return type will be undefined unless you provide a default value
+	*/
 	Return = Base | undefined,
 > {
 	readonly prefix: `${string}:::`;
 	readonly areaName: chrome.storage.AreaName;
 	readonly defaultValue?: Return;
-
-	get #storage(): chrome.storage.StorageArea {
-		assertChromeStorageAvailable();
-		return chrome.storage[this.areaName];
-	}
 
 	constructor(
 		key: string,
@@ -33,6 +32,24 @@ export class StorageItemMap<
 		this.defaultValue = defaultValue;
 	}
 
+	get #storage(): chrome.storage.StorageArea {
+		assertChromeStorageAvailable();
+		return chrome.storage[this.areaName];
+	}
+
+	private getRawStorageKey(secondaryKey: string): string {
+		return this.prefix + secondaryKey;
+	}
+
+	private getSecondaryStorageKey(rawKey: string): string | false {
+		return rawKey.startsWith(this.prefix) && rawKey.slice(this.prefix.length);
+	}
+
+	async #getRawKeys(): Promise<string[]> {
+		const allKeys = await this.#storage.getKeys();
+		return allKeys.filter(key => key.startsWith(this.prefix));
+	}
+
 	async has(secondaryKey: string): Promise<boolean> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await this.#storage.get(rawStorageKey);
@@ -44,18 +61,12 @@ export class StorageItemMap<
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await this.#storage.get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
-		if (result[rawStorageKey] === undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
-			return this.defaultValue as Return;
-		}
-
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly for this key
-		return result[rawStorageKey] as Return;
+		return result[rawStorageKey] === undefined ? (this.defaultValue as Return) : (result[rawStorageKey] as Return);
 	}
 
 	async set(secondaryKey: string, value: Exclude<Return, undefined>): Promise<void> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
-		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
+
 		if (value === undefined) {
 			await this.#storage.remove(rawStorageKey);
 		} else {
@@ -68,7 +79,11 @@ export class StorageItemMap<
 		await this.#storage.remove(rawStorageKey);
 	}
 
-	/** @deprecated Only here to match the Map API; use `remove` instead */
+	/**
+	Alias of `remove`, only here to match the Map API.
+
+	@deprecated Use `remove` instead
+	*/
 	async delete(secondaryKey: string): Promise<void> {
 		return this.remove(secondaryKey);
 	}
@@ -91,7 +106,7 @@ export class StorageItemMap<
 		for (const secondaryKey of secondaryKeys) {
 			// eslint-disable-next-line no-await-in-loop -- Intentionally fetching one value at a time to avoid loading all storage at once
 			const value = await this.get(secondaryKey);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Key exists in storage, get() will return the stored value
+
 			yield [secondaryKey, value as Exclude<Return, undefined>];
 		}
 	}
@@ -113,11 +128,10 @@ export class StorageItemMap<
 				return;
 			}
 
-			for (const rawKey of Object.keys(changes)) {
+			for (const [rawKey, change] of Object.entries(changes)) {
 				const secondaryKey = this.getSecondaryStorageKey(rawKey);
-				if (secondaryKey && hasStorageValueChanged(changes[rawKey]!)) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
-					callback(secondaryKey, changes[rawKey]!.newValue as Exclude<Return, undefined>);
+				if (secondaryKey !== false && secondaryKey !== '' && hasStorageValueChanged(change)) {
+					callback(secondaryKey, change.newValue as Exclude<Return, undefined>);
 				}
 			}
 		};
@@ -128,18 +142,5 @@ export class StorageItemMap<
 		}, {
 			once: true,
 		});
-	}
-
-	private getRawStorageKey(secondaryKey: string): string {
-		return this.prefix + secondaryKey;
-	}
-
-	private getSecondaryStorageKey(rawKey: string): string | false {
-		return rawKey.startsWith(this.prefix) && rawKey.slice(this.prefix.length);
-	}
-
-	async #getRawKeys(): Promise<string[]> {
-		const allKeys = await this.#storage.getKeys();
-		return allKeys.filter(key => key.startsWith(this.prefix));
 	}
 }
