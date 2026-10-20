@@ -2,6 +2,29 @@
 	"name": "webext-storage",
 	"version": "3.1.0",
 	"description": "A more usable typed storage API for Web Extensions",
+	"license": "MIT",
+	"repository": "fregante/webext-storage",
+	"funding": "https://github.com/sponsors/fregante",
+	"author": "Federico Brigante <me@fregante.com> (https://fregante.com)",
+	"type": "module",
+	"exports": {
+		"types": "./distribution/index.d.ts",
+		"default": "./distribution/index.js"
+	},
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"build": "tsc",
+		"prepack": "tsc --sourceMap false",
+		"test": "tsc && xo && tsd --typings distribution/index.d.ts && vitest run",
+		"test:watch": "vitest",
+		"watch": "tsc --watch"
+	},
+	"files": [
+		"distribution"
+	],
 	"keywords": [
 		"browser",
 		"extension",
@@ -16,32 +39,14 @@
 		"event",
 		"web-ext"
 	],
-	"repository": "fregante/webext-storage",
-	"funding": "https://github.com/sponsors/fregante",
-	"license": "MIT",
-	"author": "Federico Brigante <me@fregante.com> (https://fregante.com)",
-	"type": "module",
-	"exports": "./distribution/index.js",
-	"main": "./distribution/index.js",
-	"types": "./distribution/index.d.ts",
-	"scripts": {
-		"build": "tsc",
-		"prepack": "tsc --sourceMap false",
-		"test": "tsc && xo && tsd && vitest run",
-		"test:watch": "vitest",
-		"watch": "tsc --watch"
-	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^8.1.0",
-		"@types/chrome": "^0.1.39",
+		"@types/chrome": "^0.3.5",
 		"jest-chrome": "^0.8.0",
 		"tsd": "^0.33.0",
-		"typescript": "^6.0.2",
-		"vitest": "^4.1.2",
-		"xo": "^2.0.2"
-	},
-	"engines": {
-		"node": ">=20"
+		"typescript": "^6.0.3",
+		"vitest": "^5.0.5",
+		"xo": "^5.0.1"
 	},
 	"tsd": {
 		"directory": "source"

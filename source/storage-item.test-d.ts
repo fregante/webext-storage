@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-arguments -- Explicit type arguments are intentional in tsd assertions */
 /* eslint-disable @typescript-eslint/no-restricted-types -- null is an intentional test value */
 /* eslint-disable no-new -- Type tests only */
 import {expectType, expectNotAssignable, expectAssignable} from 'tsd';

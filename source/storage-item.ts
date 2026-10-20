@@ -6,20 +6,19 @@ export type StorageItemOptions<T> = {
 };
 
 export class StorageItem<
-	/** Only specify this if you don't have a default value */
+	/**
+	Only specify this if you don't have a default value
+	*/
 	Base,
 
-	/** The return type will be undefined unless you provide a default value */
+	/**
+	The return type will be undefined unless you provide a default value
+	*/
 	Return = Base | undefined,
 > {
 	readonly area: chrome.storage.AreaName;
 	readonly defaultValue?: Return;
 	readonly key: string;
-
-	get #storage(): chrome.storage.StorageArea {
-		assertChromeStorageAvailable();
-		return chrome.storage[this.area];
-	}
 
 	constructor(
 		key: string,
@@ -33,20 +32,18 @@ export class StorageItem<
 		this.defaultValue = defaultValue;
 	}
 
+	get #storage(): chrome.storage.StorageArea {
+		assertChromeStorageAvailable();
+		return chrome.storage[this.area];
+	}
+
 	async get(): Promise<Return> {
 		const result = await this.#storage.get(this.key);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
-		if (result[this.key] === undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
-			return this.defaultValue as Return;
-		}
-
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
-		return result[this.key] as Return;
+		return result[this.key] === undefined ? (this.defaultValue as Return) : (result[this.key] as Return);
 	}
 
 	async set(value: Exclude<Return, undefined>): Promise<void> {
-		// eslint-disable-next-line unicorn/prefer-ternary -- ur rong
 		if (value === undefined) {
 			await this.#storage.remove(this.key);
 		} else {
@@ -74,8 +71,7 @@ export class StorageItem<
 			area: chrome.storage.AreaName,
 		) => {
 			const changedItem = changes[this.key];
-			if (area === this.area && changedItem && hasStorageValueChanged(changedItem)) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Assumes the user never uses the Storage API directly
+			if (changedItem && area === this.area && hasStorageValueChanged(changedItem)) {
 				callback(changedItem.newValue as Exclude<Return, undefined>);
 			}
 		};
