@@ -40,7 +40,9 @@ export class StorageItem<
 	async get(): Promise<Return> {
 		const result = await this.#storage.get(this.key);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
-		return result[this.key] === undefined ? (this.defaultValue as Return) : (result[this.key] as Return);
+		return result[this.key] === undefined
+			? (this.defaultValue as Return)
+			: (result[this.key] as Return);
 	}
 
 	async set(value: Exclude<Return, undefined>): Promise<void> {

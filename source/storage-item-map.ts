@@ -61,7 +61,9 @@ export class StorageItemMap<
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		const result = await this.#storage.get(rawStorageKey);
 		// Do not use Object.hasOwn() due to https://github.com/RickyMarou/jest-webextension-mock/issues/20
-		return result[rawStorageKey] === undefined ? (this.defaultValue as Return) : (result[rawStorageKey] as Return);
+		return result[rawStorageKey] === undefined
+			? (this.defaultValue as Return)
+			: (result[rawStorageKey] as Return);
 	}
 
 	async set(secondaryKey: string, value: Exclude<Return, undefined>): Promise<void> {
