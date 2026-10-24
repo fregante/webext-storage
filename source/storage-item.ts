@@ -57,8 +57,17 @@ export class StorageItem<
 		return result[this.key] !== undefined;
 	}
 
-	async remove(): Promise<void> {
+	async delete(): Promise<void> {
 		await this.#storage.remove(this.key);
+	}
+
+	/**
+	Alias of `delete`.
+
+	@deprecated Use `delete` instead
+	*/
+	async remove(): Promise<void> {
+		return this.delete();
 	}
 
 	onChanged(

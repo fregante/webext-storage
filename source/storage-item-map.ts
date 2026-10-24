@@ -74,18 +74,18 @@ export class StorageItemMap<
 		}
 	}
 
-	async remove(secondaryKey: string): Promise<void> {
+	async delete(secondaryKey: string): Promise<void> {
 		const rawStorageKey = this.getRawStorageKey(secondaryKey);
 		await this.#storage.remove(rawStorageKey);
 	}
 
 	/**
-	Alias of `remove`, only here to match the Map API.
+	Alias of `delete`.
 
-	@deprecated Use `remove` instead
+	@deprecated Use `delete` instead
 	*/
-	async delete(secondaryKey: string): Promise<void> {
-		return this.remove(secondaryKey);
+	async remove(secondaryKey: string): Promise<void> {
+		return this.delete(secondaryKey);
 	}
 
 	async keys(): Promise<string[]> {

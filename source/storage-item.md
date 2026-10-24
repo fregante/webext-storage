@@ -15,7 +15,7 @@ await username.set('Ugo');
 await username.get();
 // Promise<string>
 
-await username.remove();
+await username.delete();
 // Promise<void>
 
 await names.has();

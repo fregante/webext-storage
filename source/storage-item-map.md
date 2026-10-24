@@ -15,7 +15,7 @@ await names.set('theslayer83', 'Mark Twain');
 await names.get('theslayer83');
 // Promise<string>
 
-await names.remove('theslayer83');
+await names.delete('theslayer83');
 // Promise<void>
 
 await names.has('theslayer83');
