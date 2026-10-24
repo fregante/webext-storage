@@ -71,7 +71,13 @@ test('set() with value', async () => {
 	assert.equal(argument1.name, 'Anne');
 });
 
-test('remove()', async () => {
+test('delete()', async () => {
+	await testItem.delete();
+	const [argument] = chrome.storage.local.remove.mock.lastCall;
+	assert.equal(argument, 'name');
+});
+
+test('remove() (deprecated alias)', async () => {
 	await testItem.remove();
 	const [argument] = chrome.storage.local.remove.mock.lastCall;
 	assert.equal(argument, 'name');
@@ -124,7 +130,7 @@ test('throws when chrome.storage is not available', async () => {
 		await expect(testItem.get()).rejects.toThrow(expectedError);
 		await expect(testItem.set('value')).rejects.toThrow(expectedError);
 		await expect(testItem.has()).rejects.toThrow(expectedError);
-		await expect(testItem.remove()).rejects.toThrow(expectedError);
+		await expect(testItem.delete()).rejects.toThrow(expectedError);
 		expect(() => testItem.onChanged(() => {})).toThrow(expectedError);
 	} finally {
 		globalThis.chrome = originalChrome;

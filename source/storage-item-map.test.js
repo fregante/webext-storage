@@ -73,7 +73,13 @@ test('set() with value', async () => {
 	assert.equal(argument1['height:::rico'], 250);
 });
 
-test('remove()', async () => {
+test('delete()', async () => {
+	await testItem.delete('mario');
+	const [argument] = chrome.storage.local.remove.mock.lastCall;
+	assert.equal(argument, 'height:::mario');
+});
+
+test('remove() (deprecated alias)', async () => {
 	await testItem.remove('mario');
 	const [argument] = chrome.storage.local.remove.mock.lastCall;
 	assert.equal(argument, 'height:::mario');
@@ -162,7 +168,7 @@ test('throws when chrome.storage is not available', async () => {
 		await expect(testItem.get('rico')).rejects.toThrow(expectedError);
 		await expect(testItem.set('rico', 250)).rejects.toThrow(expectedError);
 		await expect(testItem.has('rico')).rejects.toThrow(expectedError);
-		await expect(testItem.remove('rico')).rejects.toThrow(expectedError);
+		await expect(testItem.delete('rico')).rejects.toThrow(expectedError);
 		await expect(testItem.keys()).rejects.toThrow(expectedError);
 		await expect(testItem.clear()).rejects.toThrow(expectedError);
 		expect(() => testItem.onChanged(() => {})).toThrow(expectedError);
