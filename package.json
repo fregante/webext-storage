@@ -18,8 +18,8 @@
 	"scripts": {
 		"build": "tsc",
 		"prepack": "tsc --sourceMap false",
-		"test": "tsc && xo && tsd --typings distribution/index.d.ts && vitest run",
-		"test:watch": "vitest",
+		"test": "tsc && xo && tsd --typings distribution/index.d.ts && node --test",
+		"test:watch": "node --test --watch",
 		"watch": "tsc --watch"
 	},
 	"files": [
@@ -42,10 +42,8 @@
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^8.1.0",
 		"@types/chrome": "^0.3.5",
-		"jest-chrome": "^0.8.0",
 		"tsd": "^0.33.0",
 		"typescript": "^6.0.3",
-		"vitest": "^5.0.5",
 		"xo": "^5.0.1"
 	},
 	"tsd": {
