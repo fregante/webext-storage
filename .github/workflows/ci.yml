@@ -34,4 +34,4 @@ jobs:
           node-version-file: package.json
       - run: npm ci
       - run: npm run build
-      - run: npx vitest
+      - run: node --test
